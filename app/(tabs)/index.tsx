@@ -1,8 +1,8 @@
 import { Button, H1, Text, YStack } from "tamagui";
-import { useAuth } from "../src/hooks/useAuth";
+import { useAuth } from "../../src/hooks/useAuth";
 import { useRouter } from "expo-router";
 
-export default function Dashboard() {
+export default function Overview() {
   const { user, logout } = useAuth();
   const router = useRouter();
 
@@ -20,7 +20,7 @@ export default function Dashboard() {
       alignItems="center"
       gap="$4"
     >
-      <H1 color="$primaryDeepGreen">Dashboard</H1>
+      <H1 color="$primaryDeepGreen">Overview</H1>
 
       <Text fontSize={16} color="$textPrimary">
         Welcome{user?.email ? `, ${user.email}` : ""}!

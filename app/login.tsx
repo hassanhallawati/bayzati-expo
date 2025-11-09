@@ -46,8 +46,8 @@ export default function Login() {
       // Call auth service login
       await login(email, password);
 
-      // On success, navigate to dashboard
-      router.replace("/dashboard");
+      // On success, navigate to tabs
+      router.replace("/(tabs)");
     } catch (error: any) {
       // Handle field-specific errors from Django backend
       if (error.data) {
