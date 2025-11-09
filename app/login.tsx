@@ -3,6 +3,7 @@ import { Image } from "expo-image";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import {
   Button,
   Input,
@@ -12,6 +13,7 @@ import {
   XStack,
   YStack,
 } from "tamagui";
+import { useAuth } from "../src/hooks/useAuth";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -20,8 +22,9 @@ export default function Login() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [generalError, setGeneralError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { login, isLoading } = useAuth();
 
   const handleLogin = async () => {
     // Reset errors
@@ -39,21 +42,27 @@ export default function Login() {
       return;
     }
 
-    setIsLoading(true);
-
     try {
-      // TODO: Implement actual login logic
-      // const response = await loginAPI(email, password);
+      // Call auth service login
+      await login(email, password);
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Handle success/error
-      console.log("Login successful");
-    } catch (error) {
-      setGeneralError("Invalid email or password");
-    } finally {
-      setIsLoading(false);
+      // On success, navigate to dashboard
+      router.replace("/dashboard");
+    } catch (error: any) {
+      // Handle field-specific errors from Django backend
+      if (error.data) {
+        if (error.data.email) {
+          setEmailError(error.data.email[0]);
+        }
+        if (error.data.password) {
+          setPasswordError(error.data.password[0]);
+        }
+        if (error.data.non_field_errors) {
+          setGeneralError(error.data.non_field_errors[0]);
+        }
+      } else {
+        setGeneralError(error.message || "Invalid email or password");
+      }
     }
   };
 

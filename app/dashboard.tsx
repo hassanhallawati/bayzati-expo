@@ -1,61 +1,50 @@
-import { Card, H1, Text, XStack, YStack } from "tamagui";
+import { Button, H1, Text, YStack } from "tamagui";
+import { useAuth } from "../src/hooks/useAuth";
+import { useRouter } from "expo-router";
 
-export default function Index() {
+export default function Dashboard() {
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace("/login");
+  };
+
   return (
     <YStack
       flex={1}
+      backgroundColor="$primaryBg"
+      padding="$6"
       justifyContent="center"
       alignItems="center"
-      padding="$4"
-      backgroundColor="$background"
+      gap="$4"
     >
-      <H1 color="$primaryDeepGreen">Expense Tracker</H1>
-      <Text color="$textSecondary" marginTop="$2" marginBottom="$6">
-        Dashboard Placeholder page
+      <H1 color="$primaryDeepGreen">Dashboard</H1>
+
+      <Text fontSize={16} color="$textPrimary">
+        Welcome{user?.email ? `, ${user.email}` : ""}!
       </Text>
 
-      {/* Color Preview Cards */}
-      <YStack gap="$3" width="100%" maxWidth={400}>
-        <Card backgroundColor="$primaryCard" padding="$4" borderWidth={1} borderColor="$border">
-          <Text color="$textPrimary" fontWeight="600" marginBottom="$2">
-            Brand Colors
-          </Text>
-          <XStack gap="$2" flexWrap="wrap">
-            <YStack flex={1} minWidth={80} alignItems="center" gap="$1">
-              <YStack width={50} height={50} backgroundColor="$primaryDeepGreen" borderRadius="$2" />
-              <Text fontSize={10} color="$textSecondary">Deep Green</Text>
-            </YStack>
-            <YStack flex={1} minWidth={80} alignItems="center" gap="$1">
-              <YStack width={50} height={50} backgroundColor="$primaryGreen" borderRadius="$2" />
-              <Text fontSize={10} color="$textSecondary">Primary</Text>
-            </YStack>
-          </XStack>
-        </Card>
+      <Text fontSize={14} color="$textSecondary" textAlign="center">
+        Your expense tracker dashboard will be built here.
+      </Text>
 
-        <Card backgroundColor="$primaryCard" padding="$4" borderWidth={1} borderColor="$border">
-          <Text color="$textPrimary" fontWeight="600" marginBottom="$2">
-            Semantic Colors
-          </Text>
-          <XStack gap="$2" flexWrap="wrap">
-            <YStack flex={1} minWidth={80} alignItems="center" gap="$1">
-              <YStack width={50} height={50} backgroundColor="$expense" borderRadius="$2" />
-              <Text fontSize={10} color="$textSecondary">Expense</Text>
-            </YStack>
-            <YStack flex={1} minWidth={80} alignItems="center" gap="$1">
-              <YStack width={50} height={50} backgroundColor="$income" borderRadius="$2" />
-              <Text fontSize={10} color="$textSecondary">Income</Text>
-            </YStack>
-            <YStack flex={1} minWidth={80} alignItems="center" gap="$1">
-              <YStack width={50} height={50} backgroundColor="$warning" borderRadius="$2" />
-              <Text fontSize={10} color="$textSecondary">Warning</Text>
-            </YStack>
-            <YStack flex={1} minWidth={80} alignItems="center" gap="$1">
-              <YStack width={50} height={50} backgroundColor="$info" borderRadius="$2" />
-              <Text fontSize={10} color="$textSecondary">Info</Text>
-            </YStack>
-          </XStack>
-        </Card>
-      </YStack>
+      <Button
+        backgroundColor="$error"
+        color="$white"
+        height={46}
+        borderRadius="$3"
+        fontSize={16}
+        fontWeight="500"
+        marginTop="$4"
+        pressStyle={{
+          opacity: 0.8,
+        }}
+        onPress={handleLogout}
+      >
+        Logout
+      </Button>
     </YStack>
   );
 }
