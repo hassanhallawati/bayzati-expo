@@ -8,8 +8,10 @@ This expense tracker app uses a secure JWT-based authentication system with Djan
 
 ### Components
 
-1. **Token Manager** (`app/services/tokenManager.ts`)
-   - Secure token storage using expo-secure-store
+1. **Token Manager** (`src/services/tokenManager.ts`)
+   - Cross-platform secure token storage
+   - iOS/Android: expo-secure-store (hardware-backed encryption)
+   - Web: AsyncStorage (localStorage)
    - Token expiration tracking
    - Validation helpers
 
@@ -41,7 +43,9 @@ This expense tracker app uses a secure JWT-based authentication system with Djan
 ## Security Features
 
 ### ✅ Token Security
-- **Encrypted Storage**: Tokens stored using `expo-secure-store` (platform-specific encryption)
+- **Platform-Specific Encrypted Storage**:
+  - **iOS/Android**: Tokens stored using `expo-secure-store` with hardware-backed encryption
+  - **Web**: Tokens stored using `AsyncStorage` (localStorage with same API)
 - **Short-Lived Access Tokens**: 10-minute expiration for access tokens
 - **Automatic Refresh**: Tokens refresh automatically before expiration
 - **Secure Transmission**: HTTPS-only API calls
@@ -301,7 +305,8 @@ app/
 
 ## Dependencies
 
-- `expo-secure-store` - Encrypted token storage
+- `expo-secure-store` - Encrypted token storage for iOS/Android
+- `@react-native-async-storage/async-storage` - Token storage for web
 - `zustand` - Lightweight state management
 - `axios` - HTTP client with interceptors
 - `expo-router` - File-based routing
