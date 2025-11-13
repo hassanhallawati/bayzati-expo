@@ -1,10 +1,18 @@
-import { ChevronLeft, ChevronRight, SlidersHorizontal } from "@tamagui/lucide-icons";
-import { useState, useEffect } from "react";
-import { ScrollView, Image, ActivityIndicator } from "react-native";
+import { ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from "@tamagui/lucide-icons";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Image, Platform, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Circle, Text, XStack, YStack } from "tamagui";
-import { getGroupedTransactions, formatPeriodForAPI } from "../../src/services/transactionService";
+import { formatPeriodForAPI, getGroupedTransactions } from "../../src/services/transactionService";
 import type { GroupedTransactionsResponse } from "../../src/types/transaction";
+
+// Get the appropriate base URL for media files based on platform
+const getMediaBaseURL = () => {
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:8000';
+  }
+  return 'https://dev.bayzati.com'; // For iOS and web
+};
 
 export default function Transactions() {
   const insets = useSafeAreaInsets();
@@ -53,7 +61,7 @@ export default function Transactions() {
   };
 
   return (
-    <YStack flex={1} backgroundColor="$primaryBg">
+    <YStack flex={1} backgroundColor="$primaryBg" position="relative">
       {/* Header */}
       <YStack
         backgroundColor="$primaryDeepGreen"
@@ -167,7 +175,7 @@ export default function Transactions() {
                       key={transaction.id}
                       alignItems="center"
                       gap={12}
-                      paddingVertical={5}
+                      paddingVertical={12}
                       backgroundColor="white"
                       borderRadius={12}
                       marginBottom={0}
@@ -181,16 +189,16 @@ export default function Transactions() {
                         overflow="hidden"
                       >
                         <Image
-                          source={{ uri: `http://localhost:8000${transaction.category_icon_round}` }}
+                          source={{ uri: `${getMediaBaseURL()}${transaction.category_icon_round}` }}
                           style={{ width: 44, height: 44 }}
                           resizeMode="cover"
                         />
                       </Circle>
 
-                      {/* Merchant Info */}
-                      <YStack flex={1} gap={2}>
+                      {/* Transaction Info */}
+                      <YStack flex={1} gap={4}>
                         <Text fontSize={16} fontWeight="600" color="$textPrimary">
-                          {transaction.merchant}
+                          {transaction.type === "INCOME" ? transaction.subcategory : transaction.merchant}
                         </Text>
                         <Text fontSize={12} color="$textSecondary">
                           {transaction.category}
@@ -213,6 +221,31 @@ export default function Transactions() {
           </YStack>
         )}
       </ScrollView>
+
+      {/* Floating Action Button */}
+      <Circle
+        size={64}
+        backgroundColor="$primaryDeepGreen"
+        position="absolute"
+        bottom={insets.bottom + 80}
+        alignSelf="center"
+        elevation={8}
+        shadowColor="$shadowColor"
+        shadowOffset={{ width: 0, height: 4 }}
+        shadowOpacity={0.3}
+        shadowRadius={8}
+        pressStyle={{
+          scale: 0.95,
+          opacity: 0.9,
+        }}
+        cursor="pointer"
+        onPress={() => {
+          // TODO: Navigate to add transaction screen
+          console.log("Add transaction");
+        }}
+      >
+        <Plus size={32} color="white" />
+      </Circle>
     </YStack>
   );
 }

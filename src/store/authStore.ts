@@ -105,7 +105,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             isAuthenticated: true,
             isLoading: false,
           });
-        } catch (error) {
+        } catch (error: any) {
           // If fetching user fails, clear tokens
           await clearTokens();
           set({

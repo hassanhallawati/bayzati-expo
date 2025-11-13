@@ -10,9 +10,12 @@ export async function getGroupedTransactions(
   period?: string
 ): Promise<GroupedTransactionsResponse> {
   const params = period ? { period } : {};
+
   const response = await apiClient.get<GroupedTransactionsResponse>(
-    "/transactions/grouped",
-    { params }
+    "/transactions/grouped/",
+    {
+      params
+    }
   );
   return response.data;
 }
