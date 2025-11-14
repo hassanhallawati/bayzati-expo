@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from "@tamagui/lucide-icons";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, Platform, ScrollView } from "react-native";
+import { ActivityIndicator, Image, Platform, RefreshControl, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Circle, Text, XStack, YStack } from "tamagui";
 import AddTransactionSheet from "../../src/components/AddTransactionSheet";
@@ -23,6 +23,7 @@ export default function Transactions() {
   const [error, setError] = useState<string | null>(null);
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Fetch transactions when month changes
   useEffect(() => {
@@ -96,6 +97,20 @@ export default function Transactions() {
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const period = formatPeriodForAPI(selectedMonth);
+      const data = await getGroupedTransactions(period);
+      setTransactions(data);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch transactions");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <YStack flex={1} backgroundColor="$primaryBg" position="relative">
       {/* Header */}
@@ -107,14 +122,11 @@ export default function Transactions() {
       >
         <XStack alignItems="center" justifyContent="space-between">
           {/* Logo */}
-          <Text
-            fontSize={32}
-            fontWeight="700"
-            color="white"
-            fontFamily="Inter"
-          >
-            b
-          </Text>
+          <Image
+            source={require("../../assets/images/b-logo-white.png")}
+            style={{ width: 32, height: 32 }}
+            resizeMode="contain"
+          />
 
           {/* Month Navigation */}
           <XStack
@@ -166,7 +178,16 @@ export default function Transactions() {
       </YStack>
 
       {/* Transaction List */}
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#0B3D2E"
+            colors={["#0B3D2E"]}
+          />
+        }
+      >
         {isLoading ? (
           <YStack padding={40} alignItems="center" justifyContent="center">
             <ActivityIndicator size="large" color="#0B3D2E" />
