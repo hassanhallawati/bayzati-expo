@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Platform, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Circle, Text, XStack, YStack } from "tamagui";
+import AddTransactionSheet from "../../src/components/AddTransactionSheet";
 import { formatPeriodForAPI, getGroupedTransactions } from "../../src/services/transactionService";
 import type { GroupedTransactionsResponse } from "../../src/types/transaction";
 
@@ -20,6 +21,7 @@ export default function Transactions() {
   const [transactions, setTransactions] = useState<GroupedTransactionsResponse>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
 
   // Fetch transactions when month changes
   useEffect(() => {
@@ -227,7 +229,7 @@ export default function Transactions() {
         size={64}
         backgroundColor="$primaryDeepGreen"
         position="absolute"
-        bottom={insets.bottom + 80}
+        bottom={insets.bottom}
         alignSelf="center"
         elevation={8}
         shadowColor="$shadowColor"
@@ -239,13 +241,16 @@ export default function Transactions() {
           opacity: 0.9,
         }}
         cursor="pointer"
-        onPress={() => {
-          // TODO: Navigate to add transaction screen
-          console.log("Add transaction");
-        }}
+        onPress={() => setIsAddSheetOpen(true)}
       >
         <Plus size={32} color="white" />
       </Circle>
+
+      {/* Add Transaction Sheet */}
+      <AddTransactionSheet
+        open={isAddSheetOpen}
+        onOpenChange={setIsAddSheetOpen}
+      />
     </YStack>
   );
 }
