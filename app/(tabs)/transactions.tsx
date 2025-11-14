@@ -62,6 +62,21 @@ export default function Transactions() {
     return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   };
 
+  const handleTransactionCreated = async () => {
+    // Refresh the transaction list after creating a new transaction
+    setIsLoading(true);
+    setError(null);
+    try {
+      const period = formatPeriodForAPI(selectedMonth);
+      const data = await getGroupedTransactions(period);
+      setTransactions(data);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch transactions");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <YStack flex={1} backgroundColor="$primaryBg" position="relative">
       {/* Header */}
@@ -250,6 +265,7 @@ export default function Transactions() {
       <AddTransactionSheet
         open={isAddSheetOpen}
         onOpenChange={setIsAddSheetOpen}
+        onTransactionCreated={handleTransactionCreated}
       />
     </YStack>
   );

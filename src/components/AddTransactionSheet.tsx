@@ -4,6 +4,7 @@ import { Image, Platform, ScrollView, TouchableOpacity } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { Button, Circle, Input, Sheet, Text, XStack, YStack } from "tamagui";
 import { searchMerchants } from "../services/merchantService";
+import { createTransaction, formatDateForAPI } from "../services/transactionService";
 import type { Merchant } from "../types/merchant";
 import type { Subcategory } from "../types/category";
 import CategoryPickerSheet from "./CategoryPickerSheet";
@@ -20,9 +21,10 @@ const getMediaBaseURL = () => {
 interface AddTransactionSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onTransactionCreated?: () => void;
 }
 
-export default function AddTransactionSheet({ open, onOpenChange }: AddTransactionSheetProps) {
+export default function AddTransactionSheet({ open, onOpenChange, onTransactionCreated }: AddTransactionSheetProps) {
   const [transactionType, setTransactionType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
   const [amount, setAmount] = useState("");
   const [vendor, setVendor] = useState("");
@@ -38,6 +40,12 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
   const [selectedSubcategory, setSelectedSubcategory] = useState<Subcategory | null>(null);
   const [selectedCategoryName, setSelectedCategoryName] = useState("");
   const [showCalendarPicker, setShowCalendarPicker] = useState(false);
+  const [errors, setErrors] = useState<{
+    amount?: string;
+    vendor?: string;
+    category?: string;
+  }>({});
+  const [isSaving, setIsSaving] = useState(false);
 
   // Fetch merchants from API based on input
   useEffect(() => {
@@ -183,25 +191,88 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
     setDate(newDate);
   };
 
-  const handleSave = () => {
-    // TODO: Implement save logic
-    console.log({
-      type: transactionType,
-      amount,
-      vendor,
-      category,
-      date,
-      note,
-      selectedMerchant: selectedMerchant ? {
-        id: selectedMerchant.id,
-        merchant_name: selectedMerchant.merchant_name,
-        category: selectedMerchant.category,
-        subcategory: selectedMerchant.subcategory,
-        is_approved: selectedMerchant.is_approved,
-      } : null,
-    });
-    resetForm();
-    onOpenChange(false);
+  const handleSave = async () => {
+    // Clear previous errors
+    setErrors({});
+
+    // Validate fields
+    const newErrors: typeof errors = {};
+
+    if (!amount || parseFloat(amount) <= 0) {
+      newErrors.amount = "Please enter a valid amount";
+    }
+
+    if (transactionType === "EXPENSE" && !vendor.trim()) {
+      newErrors.vendor = "Please enter a merchant name";
+    }
+
+    if (!category) {
+      newErrors.category = "Please select a category";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const transactionData = transactionType === "EXPENSE"
+        ? {
+            transaction_type: "EXPENSE" as const,
+            merchant_name: vendor.trim(),
+            subcategory: category,
+            transaction_amount: amount,
+            transaction_date_time: formatDateForAPI(date),
+            notes: note.trim() || undefined,
+          }
+        : {
+            transaction_type: "INCOME" as const,
+            subcategory: category,
+            transaction_amount: amount,
+            transaction_date_time: formatDateForAPI(date),
+            notes: note.trim() || undefined,
+          };
+
+      await createTransaction(transactionData);
+
+      // Success - reset form and close modal
+      resetForm();
+      onOpenChange(false);
+
+      // Notify parent to refresh transaction list
+      if (onTransactionCreated) {
+        onTransactionCreated();
+      }
+    } catch (error: any) {
+      console.error("Failed to create transaction:", error);
+
+      // Handle API errors
+      if (error.response?.data) {
+        const apiErrors = error.response.data;
+        const newErrors: typeof errors = {};
+
+        if (apiErrors.transaction_amount) {
+          newErrors.amount = apiErrors.transaction_amount[0];
+        }
+        if (apiErrors.merchant_name) {
+          newErrors.vendor = apiErrors.merchant_name[0];
+        }
+        if (apiErrors.subcategory) {
+          newErrors.category = apiErrors.subcategory[0];
+        }
+
+        setErrors(newErrors);
+      } else {
+        // Generic error
+        setErrors({
+          amount: "Failed to create transaction. Please try again.",
+        });
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -253,9 +324,11 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
             size="$3"
             chromeless
             onPress={handleSave}
+            disabled={isSaving}
+            opacity={isSaving ? 0.5 : 1}
           >
             <Text fontSize={16} fontWeight="600" color="$primaryDeepGreen">
-              Save
+              {isSaving ? "Saving..." : "Save"}
             </Text>
           </Button>
         </XStack>
@@ -288,6 +361,11 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
               placeholderTextColor="$textSecondary"
             />
           </XStack>
+          {errors.amount && (
+            <Text fontSize={14} color="red" marginTop={8} textAlign="center">
+              {errors.amount}
+            </Text>
+          )}
         </YStack>
 
         {/* Income/Expense Toggle - Segmented Control */}
@@ -364,6 +442,11 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
                   placeholderTextColor="$textSecondary"
                 />
               </XStack>
+              {errors.vendor && (
+                <Text fontSize={12} color="red" marginTop={4} marginLeft={12}>
+                  {errors.vendor}
+                </Text>
+              )}
 
               {/* Vendor Suggestions Dropdown */}
               {showVendorDropdown && merchantSuggestions.length > 0 && (
@@ -415,57 +498,64 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
           )}
 
           {/* Select Category */}
-          <XStack
-            backgroundColor="white"
-            padding={16}
-            borderRadius={12}
-            alignItems="center"
-            gap={12}
-            pressStyle={!selectedMerchant ? { opacity: 0.7 } : undefined}
-            cursor={!selectedMerchant ? "pointer" : "default"}
-            opacity={selectedMerchant ? 0.5 : 1}
-            onPress={() => {
-              if (!selectedMerchant) {
-                setShowCategoryPicker(true);
-              }
-            }}
-          >
-            {selectedSubcategory ? (
-              <YStack
-                width={44}
-                height={44}
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Image
-                  source={{ uri: `${getMediaBaseURL()}${selectedSubcategory.icon_round}` }}
-                  style={{ width: 44, height: 44 }}
-                  resizeMode="contain"
-                />
-              </YStack>
-            ) : (
-              <Tag size={24} color="$primaryDeepGreen" />
-            )}
-            <YStack flex={1}>
-              {category ? (
-                <>
-                  <Text fontSize={16} color="$textPrimary" fontWeight="600">
-                    {category}
-                  </Text>
-                  {selectedCategoryName && (
-                    <Text fontSize={12} color="$textSecondary" marginTop={2}>
-                      {selectedCategoryName}
-                    </Text>
-                  )}
-                </>
+          <YStack>
+            <XStack
+              backgroundColor="white"
+              padding={16}
+              borderRadius={12}
+              alignItems="center"
+              gap={12}
+              pressStyle={!selectedMerchant ? { opacity: 0.7 } : undefined}
+              cursor={!selectedMerchant ? "pointer" : "default"}
+              opacity={selectedMerchant ? 0.5 : 1}
+              onPress={() => {
+                if (!selectedMerchant) {
+                  setShowCategoryPicker(true);
+                }
+              }}
+            >
+              {selectedSubcategory ? (
+                <YStack
+                  width={44}
+                  height={44}
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  <Image
+                    source={{ uri: `${getMediaBaseURL()}${selectedSubcategory.icon_round}` }}
+                    style={{ width: 44, height: 44 }}
+                    resizeMode="contain"
+                  />
+                </YStack>
               ) : (
-                <Text fontSize={16} color="$textSecondary">
-                  Select Category
-                </Text>
+                <Tag size={24} color="$primaryDeepGreen" />
               )}
-            </YStack>
-            <ChevronRight size={24} color="$textSecondary" />
-          </XStack>
+              <YStack flex={1}>
+                {category ? (
+                  <>
+                    <Text fontSize={16} color="$textPrimary" fontWeight="600">
+                      {category}
+                    </Text>
+                    {selectedCategoryName && (
+                      <Text fontSize={12} color="$textSecondary" marginTop={2}>
+                        {selectedCategoryName}
+                      </Text>
+                    )}
+                  </>
+                ) : (
+                  <Text fontSize={16} color="$textSecondary">
+                    Select Category
+                  </Text>
+                )}
+              </YStack>
+              <ChevronRight size={24} color="$textSecondary" />
+            </XStack>
+            {errors.category && (
+              <Text fontSize={12} color="red" marginTop={4} marginLeft={12}>
+                {errors.category}
+              </Text>
+            )}
+          </YStack>
 
           {/* Date */}
           <XStack

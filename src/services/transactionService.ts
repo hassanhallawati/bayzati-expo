@@ -30,3 +30,46 @@ export function formatPeriodForAPI(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   return `${year}-${month}`;
 }
+
+/**
+ * Format a Date object to YYYY-MM-DD format for API
+ * @param date - Date object to format
+ * @returns Formatted date string (e.g., "2025-11-14")
+ */
+export function formatDateForAPI(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+interface CreateTransactionExpenseRequest {
+  transaction_type: "EXPENSE";
+  merchant_name: string;
+  subcategory: string;
+  transaction_amount: string;
+  transaction_date_time: string;
+  notes?: string;
+}
+
+interface CreateTransactionIncomeRequest {
+  transaction_type: "INCOME";
+  subcategory: string;
+  transaction_amount: string;
+  transaction_date_time: string;
+  notes?: string;
+}
+
+type CreateTransactionRequest = CreateTransactionExpenseRequest | CreateTransactionIncomeRequest;
+
+/**
+ * Create a new transaction
+ * @param data - Transaction data
+ * @returns Created transaction response
+ */
+export async function createTransaction(
+  data: CreateTransactionRequest
+): Promise<any> {
+  const response = await apiClient.post("/transactions/create/", data);
+  return response.data;
+}
