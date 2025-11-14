@@ -1,7 +1,18 @@
 import { Calendar, ChevronRight, FileText, Tag, X } from "@tamagui/lucide-icons";
-import { useState } from "react";
-import { Button, Input, Sheet, Text, XStack, YStack } from "tamagui";
+import { useEffect, useState } from "react";
+import { Image, Platform, ScrollView, TouchableOpacity } from "react-native";
+import { Button, Circle, Input, Sheet, Text, XStack, YStack } from "tamagui";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { searchMerchants } from "../services/merchantService";
+import type { Merchant } from "../types/merchant";
+
+// Get the appropriate base URL for media files based on platform
+const getMediaBaseURL = () => {
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:8000';
+  }
+  return 'https://dev.bayzati.com'; // For iOS and web
+};
 
 interface AddTransactionSheetProps {
   open: boolean;
@@ -15,6 +26,89 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
   const [category, setCategory] = useState("");
   const [date, setDate] = useState("Today");
   const [note, setNote] = useState("");
+  const [merchantSuggestions, setMerchantSuggestions] = useState<Merchant[]>([]);
+  const [showVendorDropdown, setShowVendorDropdown] = useState(false);
+  const [isVendorSelected, setIsVendorSelected] = useState(false);
+  const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
+  const [isLoadingMerchants, setIsLoadingMerchants] = useState(false);
+
+  // Fetch merchants from API based on input
+  useEffect(() => {
+    if (vendor.trim().length > 0 && !isVendorSelected) {
+      const fetchMerchants = async () => {
+        setIsLoadingMerchants(true);
+        try {
+          const merchants = await searchMerchants(vendor.trim());
+          setMerchantSuggestions(merchants);
+          if (merchants.length > 0) {
+            setShowVendorDropdown(true);
+          } else {
+            setShowVendorDropdown(false);
+          }
+        } catch (error) {
+          console.error("Failed to fetch merchants:", error);
+          setMerchantSuggestions([]);
+          setShowVendorDropdown(false);
+        } finally {
+          setIsLoadingMerchants(false);
+        }
+      };
+
+      // Debounce API calls to avoid too many requests
+      const timeoutId = setTimeout(fetchMerchants, 300);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setMerchantSuggestions([]);
+      setShowVendorDropdown(false);
+    }
+  }, [vendor, isVendorSelected]);
+
+  const handleVendorSelect = (merchant: Merchant) => {
+    setIsVendorSelected(true);
+    setShowVendorDropdown(false);
+    setVendor(merchant.merchant_name);
+    setSelectedMerchant(merchant);
+    // Auto-fill category from merchant data
+    setCategory(merchant.category.name);
+  };
+
+  const handleVendorChange = (text: string) => {
+    setIsVendorSelected(false);
+    setVendor(text);
+    setSelectedMerchant(null);
+    // Clear auto-filled category when user manually edits vendor
+    setCategory("");
+  };
+
+  const resetForm = () => {
+    setAmount("");
+    setVendor("");
+    setCategory("");
+    setDate("Today");
+    setNote("");
+    setSelectedMerchant(null);
+    setIsVendorSelected(false);
+    setShowVendorDropdown(false);
+    setMerchantSuggestions([]);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    setTransactionType("EXPENSE");
+    onOpenChange(false);
+  };
+
+  const handleTransactionTypeChange = (type: "INCOME" | "EXPENSE") => {
+    setTransactionType(type);
+    // Only clear vendor and category when toggling transaction type
+    // Keep amount, date, and note
+    setVendor("");
+    setCategory("");
+    setSelectedMerchant(null);
+    setIsVendorSelected(false);
+    setShowVendorDropdown(false);
+    setMerchantSuggestions([]);
+  };
 
   const handleSave = () => {
     // TODO: Implement save logic
@@ -25,7 +119,15 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
       category,
       date,
       note,
+      selectedMerchant: selectedMerchant ? {
+        id: selectedMerchant.id,
+        merchant_name: selectedMerchant.merchant_name,
+        category: selectedMerchant.category,
+        subcategory: selectedMerchant.subcategory,
+        is_approved: selectedMerchant.is_approved,
+      } : null,
     });
+    resetForm();
     onOpenChange(false);
   };
 
@@ -70,7 +172,7 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
             chromeless
             circular
             icon={<X size={24} color="$textPrimary" />}
-            onPress={() => onOpenChange(false)}
+            onPress={handleClose}
           />
           <Text fontSize={18} fontWeight="600" color="$textPrimary">
             Add Transaction
@@ -133,7 +235,7 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
               backgroundColor: transactionType === "EXPENSE" ? "$primaryDeepGreen" : "transparent",
               opacity: 0.9,
             }}
-            onPress={() => setTransactionType("EXPENSE")}
+            onPress={() => handleTransactionTypeChange("EXPENSE")}
           >
             <Text
               fontSize={16}
@@ -153,7 +255,7 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
               backgroundColor: transactionType === "INCOME" ? "$primaryDeepGreen" : "transparent",
               opacity: 0.9,
             }}
-            onPress={() => setTransactionType("INCOME")}
+            onPress={() => handleTransactionTypeChange("INCOME")}
           >
             <Text
               fontSize={16}
@@ -167,27 +269,78 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
 
         {/* Form Fields */}
         <YStack gap={16}>
-          {/* Add Vendor */}
-          <XStack
-            backgroundColor="white"
-            padding={16}
-            borderRadius={12}
-            alignItems="center"
-            gap={12}
-          >
-            <Tag size={24} color="$primaryDeepGreen" />
-            <Input
-              flex={1}
-              placeholder="Add Vendor"
-              value={vendor}
-              onChangeText={setVendor}
-              borderWidth={0}
-              backgroundColor="transparent"
-              fontSize={16}
-              color="$textPrimary"
-              placeholderTextColor="$textSecondary"
-            />
-          </XStack>
+          {/* Add Vendor - Only show for EXPENSE */}
+          {transactionType === "EXPENSE" && (
+            <YStack position="relative">
+              <XStack
+                backgroundColor="white"
+                padding={16}
+                borderRadius={12}
+                alignItems="center"
+                gap={12}
+              >
+                <Tag size={24} color="$primaryDeepGreen" />
+                <Input
+                  flex={1}
+                  placeholder="Add Vendor"
+                  value={vendor}
+                  onChangeText={handleVendorChange}
+                  borderWidth={0}
+                  backgroundColor="transparent"
+                  fontSize={16}
+                  color="$textPrimary"
+                  placeholderTextColor="$textSecondary"
+                />
+              </XStack>
+
+              {/* Vendor Suggestions Dropdown */}
+              {showVendorDropdown && merchantSuggestions.length > 0 && (
+                <YStack
+                  backgroundColor="white"
+                  borderRadius={12}
+                  marginTop={8}
+                  elevation={4}
+                  shadowColor="$shadowColor"
+                  shadowOffset={{ width: 0, height: 2 }}
+                  shadowOpacity={0.1}
+                  shadowRadius={4}
+                  maxHeight={200}
+                  overflow="hidden"
+                >
+                  <ScrollView>
+                    {isLoadingMerchants ? (
+                      <YStack padding={16} alignItems="center">
+                        <Text fontSize={14} color="$textSecondary">
+                          Loading...
+                        </Text>
+                      </YStack>
+                    ) : (
+                      merchantSuggestions.map((merchant, index) => (
+                        <TouchableOpacity
+                          key={merchant.id}
+                          onPress={() => handleVendorSelect(merchant)}
+                        >
+                          <YStack
+                            padding={12}
+                            paddingHorizontal={16}
+                            borderBottomWidth={index < merchantSuggestions.length - 1 ? 1 : 0}
+                            borderBottomColor="$borderColor"
+                          >
+                            <Text fontSize={16} color="$textPrimary" fontWeight="600">
+                              {merchant.merchant_name}
+                            </Text>
+                            <Text fontSize={12} color="$textSecondary" marginTop={2}>
+                              {merchant.category.name} • {merchant.subcategory.name}
+                            </Text>
+                          </YStack>
+                        </TouchableOpacity>
+                      ))
+                    )}
+                  </ScrollView>
+                </YStack>
+              )}
+            </YStack>
+          )}
 
           {/* Select Category */}
           <XStack
@@ -203,7 +356,22 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
               console.log("Open category picker");
             }}
           >
-            <Tag size={24} color="$primaryDeepGreen" />
+            {selectedMerchant ? (
+              <Circle
+                size={44}
+                alignItems="center"
+                justifyContent="center"
+                overflow="hidden"
+              >
+                <Image
+                  source={{ uri: `${getMediaBaseURL()}${selectedMerchant.subcategory.icon_round}` }}
+                  style={{ width: 44, height: 44 }}
+                  resizeMode="cover"
+                />
+              </Circle>
+            ) : (
+              <Tag size={24} color="$primaryDeepGreen" />
+            )}
             <Text
               flex={1}
               fontSize={16}
