@@ -61,8 +61,11 @@ export default function AddTransactionSheet({ open, onOpenChange, transaction, o
       setSelectedCategoryName(transaction.category);
       setNote(transaction.notes || "");
 
-      // Parse date from YYYY-MM-DD format
-      const parsedDate = new Date(transaction.transaction_date_time);
+      // Parse date from ISO 8601 format (e.g., "2025-11-14T00:00:00+04:00" or "2025-11-13T20:00:00Z")
+      // Extract just the date portion and create a local date to avoid timezone issues
+      const dateStr = transaction.transaction_date_time.split('T')[0];
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const parsedDate = new Date(year, month - 1, day);
       setDate(parsedDate);
 
       // Set subcategory for display with icon
