@@ -1,8 +1,8 @@
 import { Calendar, ChevronRight, FileText, Tag, X } from "@tamagui/lucide-icons";
 import { useEffect, useState } from "react";
 import { Image, Platform, ScrollView, TouchableOpacity } from "react-native";
-import { Button, Circle, Input, Sheet, Text, XStack, YStack } from "tamagui";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { Button, Circle, Input, Sheet, Text, XStack, YStack } from "tamagui";
 import { searchMerchants } from "../services/merchantService";
 import type { Merchant } from "../types/merchant";
 
@@ -282,7 +282,7 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
                 <Tag size={24} color="$primaryDeepGreen" />
                 <Input
                   flex={1}
-                  placeholder="Add Vendor"
+                  placeholder="Select or Add Merchant"
                   value={vendor}
                   onChangeText={handleVendorChange}
                   borderWidth={0}
@@ -349,11 +349,14 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
             borderRadius={12}
             alignItems="center"
             gap={12}
-            pressStyle={{ opacity: 0.7 }}
-            cursor="pointer"
+            pressStyle={!selectedMerchant ? { opacity: 0.7 } : undefined}
+            cursor={!selectedMerchant ? "pointer" : "default"}
+            opacity={selectedMerchant ? 0.5 : 1}
             onPress={() => {
-              // TODO: Open category picker
-              console.log("Open category picker");
+              if (!selectedMerchant) {
+                // TODO: Open category picker
+                console.log("Open category picker");
+              }
             }}
           >
             {selectedMerchant ? (
