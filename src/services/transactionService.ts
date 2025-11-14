@@ -62,6 +62,25 @@ interface CreateTransactionIncomeRequest {
 
 type CreateTransactionRequest = CreateTransactionExpenseRequest | CreateTransactionIncomeRequest;
 
+interface UpdateTransactionExpenseRequest {
+  transaction_type: "EXPENSE";
+  merchant_name: string;
+  subcategory: string;
+  transaction_amount: string;
+  transaction_date_time: string;
+  notes?: string;
+}
+
+interface UpdateTransactionIncomeRequest {
+  transaction_type: "INCOME";
+  subcategory: string;
+  transaction_amount: string;
+  transaction_date_time: string;
+  notes?: string;
+}
+
+type UpdateTransactionRequest = UpdateTransactionExpenseRequest | UpdateTransactionIncomeRequest;
+
 /**
  * Create a new transaction
  * @param data - Transaction data
@@ -71,5 +90,19 @@ export async function createTransaction(
   data: CreateTransactionRequest
 ): Promise<any> {
   const response = await apiClient.post("/transactions/create/", data);
+  return response.data;
+}
+
+/**
+ * Update an existing transaction
+ * @param id - Transaction ID
+ * @param data - Transaction data
+ * @returns Updated transaction response
+ */
+export async function updateTransaction(
+  id: string,
+  data: UpdateTransactionRequest
+): Promise<any> {
+  const response = await apiClient.put(`/transactions/${id}/`, data);
   return response.data;
 }

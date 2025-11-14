@@ -10,6 +10,7 @@ export interface Transaction {
   notes: string;
   sign: string;
   color: string;
+  transaction_date_time: string; // Format: YYYY-MM-DD
 }
 
 export interface GroupedTransaction {

@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Circle, Text, XStack, YStack } from "tamagui";
 import AddTransactionSheet from "../../src/components/AddTransactionSheet";
 import { formatPeriodForAPI, getGroupedTransactions } from "../../src/services/transactionService";
-import type { GroupedTransactionsResponse } from "../../src/types/transaction";
+import type { GroupedTransactionsResponse, Transaction } from "../../src/types/transaction";
 
 // Get the appropriate base URL for media files based on platform
 const getMediaBaseURL = () => {
@@ -22,6 +22,7 @@ export default function Transactions() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   // Fetch transactions when month changes
   useEffect(() => {
@@ -74,6 +75,24 @@ export default function Transactions() {
       setError(err.message || "Failed to fetch transactions");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleTransactionUpdated = async () => {
+    // Refresh the transaction list after updating a transaction
+    await handleTransactionCreated();
+  };
+
+  const handleTransactionClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsAddSheetOpen(true);
+  };
+
+  const handleSheetClose = (open: boolean) => {
+    setIsAddSheetOpen(open);
+    if (!open) {
+      // Clear selected transaction when sheet closes
+      setSelectedTransaction(null);
     }
   };
 
@@ -197,6 +216,9 @@ export default function Transactions() {
                       borderRadius={12}
                       marginBottom={0}
                       paddingHorizontal={12}
+                      onPress={() => handleTransactionClick(transaction)}
+                      pressStyle={{ opacity: 0.7 }}
+                      cursor="pointer"
                     >
                       {/* Icon */}
                       <Circle
@@ -261,11 +283,13 @@ export default function Transactions() {
         <Plus size={32} color="white" />
       </Circle>
 
-      {/* Add Transaction Sheet */}
+      {/* Add/Edit Transaction Sheet */}
       <AddTransactionSheet
         open={isAddSheetOpen}
-        onOpenChange={setIsAddSheetOpen}
+        onOpenChange={handleSheetClose}
+        transaction={selectedTransaction}
         onTransactionCreated={handleTransactionCreated}
+        onTransactionUpdated={handleTransactionUpdated}
       />
     </YStack>
   );

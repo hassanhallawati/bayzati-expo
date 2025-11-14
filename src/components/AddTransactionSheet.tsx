@@ -4,9 +4,10 @@ import { Image, Platform, ScrollView, TouchableOpacity } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { Button, Circle, Input, Sheet, Text, XStack, YStack } from "tamagui";
 import { searchMerchants } from "../services/merchantService";
-import { createTransaction, formatDateForAPI } from "../services/transactionService";
+import { createTransaction, updateTransaction, formatDateForAPI } from "../services/transactionService";
 import type { Merchant } from "../types/merchant";
 import type { Subcategory } from "../types/category";
+import type { Transaction } from "../types/transaction";
 import CategoryPickerSheet from "./CategoryPickerSheet";
 import CalendarPickerSheet from "./CalendarPickerSheet";
 
@@ -21,10 +22,13 @@ const getMediaBaseURL = () => {
 interface AddTransactionSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  transaction?: Transaction | null;
   onTransactionCreated?: () => void;
+  onTransactionUpdated?: () => void;
 }
 
-export default function AddTransactionSheet({ open, onOpenChange, onTransactionCreated }: AddTransactionSheetProps) {
+export default function AddTransactionSheet({ open, onOpenChange, transaction, onTransactionCreated, onTransactionUpdated }: AddTransactionSheetProps) {
+  const isEditMode = !!transaction;
   const [transactionType, setTransactionType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
   const [amount, setAmount] = useState("");
   const [vendor, setVendor] = useState("");
@@ -46,6 +50,54 @@ export default function AddTransactionSheet({ open, onOpenChange, onTransactionC
     category?: string;
   }>({});
   const [isSaving, setIsSaving] = useState(false);
+
+  // Initialize form values when in edit mode
+  useEffect(() => {
+    if (transaction && open) {
+      setTransactionType(transaction.type);
+      setAmount(transaction.amount);
+      setVendor(transaction.merchant || "");
+      setCategory(transaction.subcategory);
+      setSelectedCategoryName(transaction.category);
+      setNote(transaction.notes || "");
+
+      // Parse date from YYYY-MM-DD format
+      const parsedDate = new Date(transaction.transaction_date_time);
+      setDate(parsedDate);
+
+      // Set subcategory for display with icon
+      setSelectedSubcategory({
+        id: "", // We don't have this from the transaction object
+        name: transaction.subcategory,
+        icon_round: transaction.category_icon_round,
+      });
+
+      // Mark as vendor selected if it's an expense
+      if (transaction.type === "EXPENSE" && transaction.merchant) {
+        setIsVendorSelected(true);
+        // Create a mock merchant object for proper state management
+        setSelectedMerchant({
+          id: transaction.id,
+          merchant_name: transaction.merchant,
+          category: {
+            id: "",
+            name: transaction.category,
+            icon: transaction.category_icon,
+          },
+          subcategory: {
+            id: "",
+            name: transaction.subcategory,
+            icon_round: transaction.category_icon_round,
+          },
+          is_approved: true,
+        });
+      }
+    } else if (!transaction && open) {
+      // Reset to default for add mode
+      resetForm();
+      setTransactionType("EXPENSE");
+    }
+  }, [transaction, open]);
 
   // Fetch merchants from API based on input
   useEffect(() => {
@@ -235,18 +287,37 @@ export default function AddTransactionSheet({ open, onOpenChange, onTransactionC
             notes: note.trim() || undefined,
           };
 
-      await createTransaction(transactionData);
+      if (isEditMode) {
+        // Edit mode - update existing transaction
+        if (!transaction?.id) {
+          throw new Error("Transaction ID is required for update");
+        }
 
-      // Success - reset form and close modal
-      resetForm();
-      onOpenChange(false);
+        await updateTransaction(transaction.id, transactionData);
 
-      // Notify parent to refresh transaction list
-      if (onTransactionCreated) {
-        onTransactionCreated();
+        // Success - reset form and close modal
+        resetForm();
+        onOpenChange(false);
+
+        // Notify parent to refresh transaction list
+        if (onTransactionUpdated) {
+          onTransactionUpdated();
+        }
+      } else {
+        // Add mode - create new transaction
+        await createTransaction(transactionData);
+
+        // Success - reset form and close modal
+        resetForm();
+        onOpenChange(false);
+
+        // Notify parent to refresh transaction list
+        if (onTransactionCreated) {
+          onTransactionCreated();
+        }
       }
     } catch (error: any) {
-      console.error("Failed to create transaction:", error);
+      console.error(`Failed to ${isEditMode ? 'update' : 'create'} transaction:`, error);
 
       // Handle API errors
       if (error.response?.data) {
@@ -318,7 +389,7 @@ export default function AddTransactionSheet({ open, onOpenChange, onTransactionC
             onPress={handleClose}
           />
           <Text fontSize={18} fontWeight="600" color="$textPrimary">
-            Add Transaction
+            {isEditMode ? "Edit Transaction" : "Add Transaction"}
           </Text>
           <Button
             size="$3"
