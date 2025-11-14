@@ -1,5 +1,5 @@
+import { BarChart3, ChartPie, Gem, Receipt, Settings } from "@tamagui/lucide-icons";
 import { Tabs } from "expo-router";
-import { Home, Receipt, Gem, BarChart3, Settings } from "@tamagui/lucide-icons";
 
 export default function TabLayout() {
   return (
@@ -27,7 +27,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Overview",
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <ChartPie size={size} color={color} />,
         }}
       />
       <Tabs.Screen
