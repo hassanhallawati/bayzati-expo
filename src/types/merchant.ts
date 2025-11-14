@@ -1,10 +1,10 @@
-export interface Category {
+export interface MerchantCategory {
   id: string;
   name: string;
   icon: string;
 }
 
-export interface Subcategory {
+export interface MerchantSubcategory {
   id: string;
   name: string;
   icon_round: string;
@@ -13,8 +13,8 @@ export interface Subcategory {
 export interface Merchant {
   id: string;
   merchant_name: string;
-  category: Category;
-  subcategory: Subcategory;
+  category: MerchantCategory;
+  subcategory: MerchantSubcategory;
   is_approved: boolean;
 }
 

@@ -5,6 +5,8 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { Button, Circle, Input, Sheet, Text, XStack, YStack } from "tamagui";
 import { searchMerchants } from "../services/merchantService";
 import type { Merchant } from "../types/merchant";
+import type { Subcategory } from "../types/category";
+import CategoryPickerSheet from "./CategoryPickerSheet";
 
 // Get the appropriate base URL for media files based on platform
 const getMediaBaseURL = () => {
@@ -31,6 +33,9 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
   const [isVendorSelected, setIsVendorSelected] = useState(false);
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
   const [isLoadingMerchants, setIsLoadingMerchants] = useState(false);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<Subcategory | null>(null);
+  const [selectedCategoryName, setSelectedCategoryName] = useState("");
 
   // Fetch merchants from API based on input
   useEffect(() => {
@@ -68,14 +73,23 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
     setShowVendorDropdown(false);
     setVendor(merchant.merchant_name);
     setSelectedMerchant(merchant);
-    // Auto-fill category from merchant data
-    setCategory(merchant.category.name);
+    // Convert merchant subcategory to full subcategory format
+    setSelectedSubcategory({
+      id: merchant.subcategory.id,
+      name: merchant.subcategory.name,
+      icon_round: merchant.subcategory.icon_round,
+    });
+    // Auto-fill category from merchant data (use subcategory name)
+    setCategory(merchant.subcategory.name);
+    setSelectedCategoryName(merchant.category.name);
   };
 
   const handleVendorChange = (text: string) => {
     setIsVendorSelected(false);
     setVendor(text);
     setSelectedMerchant(null);
+    setSelectedSubcategory(null);
+    setSelectedCategoryName("");
     // Clear auto-filled category when user manually edits vendor
     setCategory("");
   };
@@ -87,6 +101,8 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
     setDate("Today");
     setNote("");
     setSelectedMerchant(null);
+    setSelectedSubcategory(null);
+    setSelectedCategoryName("");
     setIsVendorSelected(false);
     setShowVendorDropdown(false);
     setMerchantSuggestions([]);
@@ -105,9 +121,17 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
     setVendor("");
     setCategory("");
     setSelectedMerchant(null);
+    setSelectedSubcategory(null);
+    setSelectedCategoryName("");
     setIsVendorSelected(false);
     setShowVendorDropdown(false);
     setMerchantSuggestions([]);
+  };
+
+  const handleCategorySelect = (categoryName: string, subcategoryName: string, subcategory: Subcategory) => {
+    setCategory(subcategoryName); // Use subcategory name instead of category name
+    setSelectedSubcategory(subcategory);
+    setSelectedCategoryName(categoryName);
   };
 
   const handleSave = () => {
@@ -354,34 +378,44 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
             opacity={selectedMerchant ? 0.5 : 1}
             onPress={() => {
               if (!selectedMerchant) {
-                // TODO: Open category picker
-                console.log("Open category picker");
+                setShowCategoryPicker(true);
               }
             }}
           >
-            {selectedMerchant ? (
-              <Circle
-                size={44}
+            {selectedSubcategory ? (
+              <YStack
+                width={44}
+                height={44}
                 alignItems="center"
                 justifyContent="center"
-                overflow="hidden"
               >
                 <Image
-                  source={{ uri: `${getMediaBaseURL()}${selectedMerchant.subcategory.icon_round}` }}
+                  source={{ uri: `${getMediaBaseURL()}${selectedSubcategory.icon_round}` }}
                   style={{ width: 44, height: 44 }}
-                  resizeMode="cover"
+                  resizeMode="contain"
                 />
-              </Circle>
+              </YStack>
             ) : (
               <Tag size={24} color="$primaryDeepGreen" />
             )}
-            <Text
-              flex={1}
-              fontSize={16}
-              color={category ? "$textPrimary" : "$textSecondary"}
-            >
-              {category || "Select Category"}
-            </Text>
+            <YStack flex={1}>
+              {category ? (
+                <>
+                  <Text fontSize={16} color="$textPrimary" fontWeight="600">
+                    {category}
+                  </Text>
+                  {selectedCategoryName && (
+                    <Text fontSize={12} color="$textSecondary" marginTop={2}>
+                      {selectedCategoryName}
+                    </Text>
+                  )}
+                </>
+              ) : (
+                <Text fontSize={16} color="$textSecondary">
+                  Select Category
+                </Text>
+              )}
+            </YStack>
             <ChevronRight size={24} color="$textSecondary" />
           </XStack>
 
@@ -436,6 +470,14 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
             </YStack>
         </KeyboardAwareScrollView>
       </Sheet.Frame>
+
+      {/* Category Picker Sheet */}
+      <CategoryPickerSheet
+        open={showCategoryPicker}
+        onOpenChange={setShowCategoryPicker}
+        onSelectCategory={handleCategorySelect}
+        transactionType={transactionType}
+      />
     </Sheet>
   );
 }
