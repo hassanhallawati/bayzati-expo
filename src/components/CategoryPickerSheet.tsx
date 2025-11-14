@@ -101,7 +101,6 @@ export default function CategoryPickerSheet({
         exitStyle={{ opacity: 0 }}
         backgroundColor="rgba(0, 0, 0, 0.5)"
       />
-      <Sheet.Handle backgroundColor="$borderColor" />
       <Sheet.Frame
         backgroundColor="$primaryBg"
         borderTopLeftRadius={20}

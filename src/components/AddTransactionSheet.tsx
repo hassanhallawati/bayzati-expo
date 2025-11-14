@@ -1,4 +1,4 @@
-import { Calendar, ChevronRight, FileText, Tag, X } from "@tamagui/lucide-icons";
+import { Calendar, ChevronLeft, ChevronRight, FileText, Tag, X } from "@tamagui/lucide-icons";
 import { useEffect, useState } from "react";
 import { Image, Platform, ScrollView, TouchableOpacity } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -7,6 +7,7 @@ import { searchMerchants } from "../services/merchantService";
 import type { Merchant } from "../types/merchant";
 import type { Subcategory } from "../types/category";
 import CategoryPickerSheet from "./CategoryPickerSheet";
+import CalendarPickerSheet from "./CalendarPickerSheet";
 
 // Get the appropriate base URL for media files based on platform
 const getMediaBaseURL = () => {
@@ -26,7 +27,7 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
   const [amount, setAmount] = useState("");
   const [vendor, setVendor] = useState("");
   const [category, setCategory] = useState("");
-  const [date, setDate] = useState("Today");
+  const [date, setDate] = useState(new Date());
   const [note, setNote] = useState("");
   const [merchantSuggestions, setMerchantSuggestions] = useState<Merchant[]>([]);
   const [showVendorDropdown, setShowVendorDropdown] = useState(false);
@@ -36,6 +37,7 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [selectedSubcategory, setSelectedSubcategory] = useState<Subcategory | null>(null);
   const [selectedCategoryName, setSelectedCategoryName] = useState("");
+  const [showCalendarPicker, setShowCalendarPicker] = useState(false);
 
   // Fetch merchants from API based on input
   useEffect(() => {
@@ -98,7 +100,7 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
     setAmount("");
     setVendor("");
     setCategory("");
-    setDate("Today");
+    setDate(new Date());
     setNote("");
     setSelectedMerchant(null);
     setSelectedSubcategory(null);
@@ -132,6 +134,53 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
     setCategory(subcategoryName); // Use subcategory name instead of category name
     setSelectedSubcategory(subcategory);
     setSelectedCategoryName(categoryName);
+  };
+
+  const handleDateIncrement = () => {
+    const newDate = new Date(date);
+    newDate.setDate(newDate.getDate() + 1);
+    setDate(newDate);
+  };
+
+  const handleDateDecrement = () => {
+    const newDate = new Date(date);
+    newDate.setDate(newDate.getDate() - 1);
+    setDate(newDate);
+  };
+
+  const formatDate = (date: Date): string => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Reset time for comparison
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    yesterday.setHours(0, 0, 0, 0);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    if (compareDate.getTime() === today.getTime()) {
+      return "Today";
+    } else if (compareDate.getTime() === yesterday.getTime()) {
+      return "Yesterday";
+    } else if (compareDate.getTime() === tomorrow.getTime()) {
+      return "Tomorrow";
+    } else {
+      // Format as "Monday, 14 Jan"
+      const options: Intl.DateTimeFormatOptions = {
+        weekday: 'long',
+        day: '2-digit',
+        month: 'short'
+      };
+      return date.toLocaleDateString('en-US', options);
+    }
+  };
+
+  const handleCalendarDateSelect = (newDate: Date) => {
+    setDate(newDate);
   };
 
   const handleSave = () => {
@@ -171,7 +220,6 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
         exitStyle={{ opacity: 0 }}
         backgroundColor="rgba(0, 0, 0, 0.5)"
       />
-      <Sheet.Handle backgroundColor="$borderColor" />
       <Sheet.Frame
         backgroundColor="$primaryBg"
         borderTopLeftRadius={20}
@@ -426,23 +474,43 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
             borderRadius={12}
             alignItems="center"
             gap={12}
-            pressStyle={{ opacity: 0.7 }}
-            cursor="pointer"
-            onPress={() => {
-              // TODO: Open date picker
-              console.log("Open date picker");
-            }}
           >
-            <Calendar size={24} color="$textPrimary" />
-            <YStack flex={1}>
-              <Text fontSize={16} fontWeight="600" color="$textPrimary">
-                Date
-              </Text>
-              <Text fontSize={14} color="$textSecondary">
-                {date}
-              </Text>
-            </YStack>
-            <ChevronRight size={24} color="$textSecondary" />
+            <XStack
+              flex={1}
+              alignItems="center"
+              gap={12}
+              onPress={() => setShowCalendarPicker(true)}
+              pressStyle={{ opacity: 0.7 }}
+              cursor="pointer"
+            >
+              <Calendar size={24} color="$textPrimary" />
+              <YStack flex={1}>
+                <Text fontSize={16} fontWeight="600" color="$textPrimary">
+                  Date
+                </Text>
+                <Text fontSize={14} color="$textSecondary">
+                  {formatDate(date)}
+                </Text>
+              </YStack>
+            </XStack>
+            <XStack gap={8} alignItems="center">
+              <Button
+                size="$3"
+                chromeless
+                circular
+                icon={<ChevronLeft size={20} color="$textSecondary" />}
+                onPress={handleDateDecrement}
+                pressStyle={{ opacity: 0.7 }}
+              />
+              <Button
+                size="$3"
+                chromeless
+                circular
+                icon={<ChevronRight size={20} color="$textSecondary" />}
+                onPress={handleDateIncrement}
+                pressStyle={{ opacity: 0.7 }}
+              />
+            </XStack>
           </XStack>
 
           {/* Add a note */}
@@ -477,6 +545,14 @@ export default function AddTransactionSheet({ open, onOpenChange }: AddTransacti
         onOpenChange={setShowCategoryPicker}
         onSelectCategory={handleCategorySelect}
         transactionType={transactionType}
+      />
+
+      {/* Calendar Picker Sheet */}
+      <CalendarPickerSheet
+        open={showCalendarPicker}
+        onOpenChange={setShowCalendarPicker}
+        selectedDate={date}
+        onSelectDate={handleCalendarDateSelect}
       />
     </Sheet>
   );
