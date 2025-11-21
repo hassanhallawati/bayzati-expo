@@ -287,7 +287,7 @@ export default function Transactions() {
         size={64}
         backgroundColor="$primaryDeepGreen"
         position="absolute"
-        bottom={insets.bottom}
+        bottom={20}
         alignSelf="center"
         elevation={8}
         shadowColor="$shadowColor"

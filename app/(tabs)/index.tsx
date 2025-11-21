@@ -350,6 +350,12 @@ export default function Overview() {
                           paddingVertical={4}
                         >
                           <XStack alignItems="center" gap={8} flex={1}>
+                            <XStack 
+                            width={2}
+                            alignSelf="stretch"
+                            backgroundColor="$borderColor"
+                            mx={8}
+                            /> 
                             <Image
                               source={{ uri: `${getMediaBaseURL()}${expense.subcategory_icon}` }}
                               style={{ width: 22, height: 22 }}
