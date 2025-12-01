@@ -18,6 +18,7 @@ interface CategoryPickerSheetProps {
   onOpenChange: (open: boolean) => void;
   onSelectCategory: (categoryName: string, subcategoryName: string, subcategory: Subcategory) => void;
   transactionType?: "INCOME" | "EXPENSE";
+  customFetchCategories?: () => Promise<Category[]>;
 }
 
 export default function CategoryPickerSheet({
@@ -25,6 +26,7 @@ export default function CategoryPickerSheet({
   onOpenChange,
   onSelectCategory,
   transactionType = "EXPENSE",
+  customFetchCategories,
 }: CategoryPickerSheetProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -41,7 +43,9 @@ export default function CategoryPickerSheet({
   const loadCategories = async () => {
     setIsLoading(true);
     try {
-      const data = await fetchCategoriesByType(transactionType);
+      const data = customFetchCategories
+        ? await customFetchCategories()
+        : await fetchCategoriesByType(transactionType);
       setCategories(data);
       // Expand all categories by default
       setExpandedCategories(new Set(data.map((cat) => cat.id)));
