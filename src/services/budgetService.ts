@@ -36,6 +36,14 @@ export async function updateBudgetedItemAmount(
 }
 
 /**
+ * Delete a budgeted item
+ * @param itemId - The ID of the budgeted item to delete
+ */
+export async function deleteBudgetedItem(itemId: string): Promise<void> {
+  await apiClient.delete(`/savings/budgeted-items/${itemId}/`);
+}
+
+/**
  * Create a new budgeted item
  * @param data - The budgeted item data including budget_id, type, subcategory_id, and amount
  * @returns Created budgeted item object
@@ -56,7 +64,7 @@ export async function createBudgetedItem(
  */
 export async function fetchAvailableExpenseSubcategories(): Promise<Category[]> {
   const response = await apiClient.get<AvailableSubcategoriesResponse>(
-    "/savings/available-expense-subcategories/"
+    "/savings/available-subcategories/?type=expense"
   );
 
   // Transform to match existing Category[] format for CategoryPickerSheet

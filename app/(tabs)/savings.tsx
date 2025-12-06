@@ -1,11 +1,12 @@
-import { ChevronDown, Pencil } from "@tamagui/lucide-icons";
+import { ChevronDown, Pencil, Plus } from "@tamagui/lucide-icons";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, Platform, RefreshControl } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Circle, Input, Text, XStack, YStack } from "tamagui";
 import AddBudgetCategorySheet from "../../src/components/AddBudgetCategorySheet";
-import { getBudgetSummary, updateBudgetedItemAmount } from "../../src/services/budgetService";
+import SwipeableBudgetItem from "../../src/components/SwipeableBudgetItem";
+import { deleteBudgetedItem, getBudgetSummary, updateBudgetedItemAmount } from "../../src/services/budgetService";
 import type { BudgetSummaryResponse } from "../../src/types/budget";
 
 const getMediaBaseURL = () => {
@@ -170,6 +171,19 @@ export default function Savings() {
     debouncedSave(itemId, value, originalAmount);
   };
 
+  // Handle delete budget item
+  const handleDeleteItem = async (itemId: string) => {
+    try {
+      await deleteBudgetedItem(itemId);
+      // Refresh budget data - this automatically handles:
+      // - Removing the item from the list
+      // - Removing empty categories (server returns updated data)
+      fetchBudgetData(true, true);
+    } catch (error) {
+      console.error("Failed to delete budget item:", error);
+    }
+  };
+
   return (
     <YStack flex={1} backgroundColor="#F4F4F5">
       {/* Header */}
@@ -305,56 +319,66 @@ export default function Savings() {
             </XStack>
           </YStack>
 
-          {/* Income Category */}
-          {budgetData.income_breakdown.length > 0 && (
-            <YStack
-              backgroundColor="white"
-              marginHorizontal={24}
-              marginTop={12}
-              borderRadius={16}
-              padding={12}
+          {/* Income Category - Always visible */}
+          <YStack
+            backgroundColor="white"
+            marginHorizontal={24}
+            marginTop={12}
+            borderRadius={16}
+            padding={12}
+          >
+            {/* Category Header */}
+            <XStack
+              alignItems="center"
+              justifyContent="space-between"
+              onPress={() => toggleCategory("income")}
+              pressStyle={{ opacity: 0.7 }}
             >
-              {/* Category Header */}
-              <XStack
-                alignItems="center"
-                justifyContent="space-between"
-                onPress={() => toggleCategory("income")}
-                pressStyle={{ opacity: 0.7 }}
-              >
-                <XStack alignItems="center" gap={12} flex={1}>
-                  <Circle size={43} backgroundColor="#FAFAFA">
-                    <Image
-                      source={{ uri: `${getMediaBaseURL()}${budgetData.income_breakdown[0].category_icon_round}` }}
-                      style={{ width: 43, height: 43, borderRadius: 21.5 }}
-                      resizeMode="cover"
-                    />
-                  </Circle>
-                  <Text fontSize={14} fontWeight="500" color="#333333">
-                    {budgetData.income_breakdown[0].category_name}
-                  </Text>
-                </XStack>
-
-                <XStack alignItems="center" gap={8}>
-                  <Text fontSize={14} fontWeight="600" color="#333333">
-                    OMR {getTotalIncome().toLocaleString()}
-                  </Text>
-                  <Button unstyled padding={0} onPress={() => toggleCategory("income")}>
-                    <ChevronDown
-                      size={24}
-                      color="#7a7a7a"
-                      style={{
-                        transform: [{ rotate: expandedCategories.includes("income") ? "180deg" : "0deg" }],
-                      }}
-                    />
-                  </Button>
-                </XStack>
+              <XStack alignItems="center" gap={12} flex={1}>
+                <Circle size={43} backgroundColor="#FAFAFA">
+                  <Image
+                    source={{
+                      uri: budgetData.income_breakdown.length > 0
+                        ? `${getMediaBaseURL()}${budgetData.income_breakdown[0].category_icon_round}`
+                        : `${getMediaBaseURL()}/media/category_icon_round/Income_Circle.png`
+                    }}
+                    style={{ width: 43, height: 43, borderRadius: 21.5 }}
+                    resizeMode="cover"
+                  />
+                </Circle>
+                <Text fontSize={14} fontWeight="500" color="#333333">
+                  {budgetData.income_breakdown.length > 0
+                    ? budgetData.income_breakdown[0].category_name
+                    : "Income"}
+                </Text>
               </XStack>
 
-              {/* Subcategories */}
-              {expandedCategories.includes("income") && (
-                <YStack marginTop={12} gap={8} paddingLeft={55}>
-                  {budgetData.income_breakdown.map((item) => (
-                    <YStack key={item.id} gap={4}>
+              <XStack alignItems="center" gap={8}>
+                <Text fontSize={14} fontWeight="600" color="#333333">
+                  OMR {getTotalIncome().toLocaleString()}
+                </Text>
+                <Button unstyled padding={0} onPress={() => toggleCategory("income")}>
+                  <ChevronDown
+                    size={24}
+                    color="#7a7a7a"
+                    style={{
+                      transform: [{ rotate: expandedCategories.includes("income") ? "180deg" : "0deg" }],
+                    }}
+                  />
+                </Button>
+              </XStack>
+            </XStack>
+
+            {/* Subcategories - Only show when there are items */}
+            {expandedCategories.includes("income") && budgetData.income_breakdown.length > 0 && (
+              <YStack marginTop={12} gap={8} paddingLeft={55}>
+                {budgetData.income_breakdown.map((item) => (
+                  <SwipeableBudgetItem
+                    key={item.id}
+                    itemId={item.id}
+                    onDelete={handleDeleteItem}
+                  >
+                    <YStack gap={4}>
                       <XStack alignItems="center" justifyContent="space-between">
                         <XStack alignItems="center" gap={8}>
                           <Image
@@ -390,11 +414,32 @@ export default function Savings() {
                         </Text>
                       )}
                     </YStack>
-                  ))}
-                </YStack>
-              )}
-            </YStack>
-          )}
+                  </SwipeableBudgetItem>
+                ))}
+              </YStack>
+            )}
+
+            {/* Add Income Source - Visible when expanded */}
+            {expandedCategories.includes("income") && (
+              <XStack
+                alignItems="center"
+                gap={8}
+                marginTop={budgetData.income_breakdown.length > 0 ? 8 : 12}
+                paddingLeft={55}
+                pressStyle={{ opacity: 0.7 }}
+                onPress={() => {
+                  // TODO: Open sheet to add income source
+                }}
+              >
+                <Circle size={24} backgroundColor="#EAEAEA">
+                  <Plus size={14} color="#333333" />
+                </Circle>
+                <Text fontSize={12} color="#333333">
+                  Add income Source
+                </Text>
+              </XStack>
+            )}
+          </YStack>
 
           {/* Expense Categories */}
           {budgetData.expense_breakdown.map((category, index) => {
@@ -451,42 +496,48 @@ export default function Savings() {
                 {isExpanded && category.subcategories.length > 0 && (
                   <YStack marginTop={12} gap={8} paddingLeft={55}>
                     {category.subcategories.map((subcategory) => (
-                      <YStack key={subcategory.id} gap={4}>
-                        <XStack alignItems="center" justifyContent="space-between">
-                          <XStack alignItems="center" gap={8}>
-                            <Image
-                              source={{ uri: `${getMediaBaseURL()}${subcategory.subcategory_icon}` }}
-                              style={{ width: 20, height: 20 }}
-                              resizeMode="contain"
+                      <SwipeableBudgetItem
+                        key={subcategory.id}
+                        itemId={subcategory.id}
+                        onDelete={handleDeleteItem}
+                      >
+                        <YStack gap={4}>
+                          <XStack alignItems="center" justifyContent="space-between">
+                            <XStack alignItems="center" gap={8}>
+                              <Image
+                                source={{ uri: `${getMediaBaseURL()}${subcategory.subcategory_icon}` }}
+                                style={{ width: 20, height: 20 }}
+                                resizeMode="contain"
+                              />
+                              <Text fontSize={12} color="#333333">
+                                {subcategory.subcategory_name}
+                              </Text>
+                            </XStack>
+                            <Input
+                              backgroundColor="#EAEAEA"
+                              borderRadius={9999}
+                              paddingHorizontal={12}
+                              paddingVertical={4}
+                              width={60}
+                              height={23}
+                              fontSize={12}
+                              fontWeight="500"
+                              color="black"
+                              textAlign="center"
+                              borderWidth={0}
+                              value={getDisplayValue(subcategory.id, subcategory.budgeted_amount)}
+                              onChangeText={(text) => handleAmountChange(subcategory.id, text, subcategory.budgeted_amount)}
+                              keyboardType="numeric"
+                              opacity={savingItems.has(subcategory.id) ? 0.5 : 1}
                             />
-                            <Text fontSize={12} color="#333333">
-                              {subcategory.subcategory_name}
-                            </Text>
                           </XStack>
-                          <Input
-                            backgroundColor="#EAEAEA"
-                            borderRadius={9999}
-                            paddingHorizontal={12}
-                            paddingVertical={4}
-                            width={60}
-                            height={23}
-                            fontSize={12}
-                            fontWeight="500"
-                            color="black"
-                            textAlign="center"
-                            borderWidth={0}
-                            value={getDisplayValue(subcategory.id, subcategory.budgeted_amount)}
-                            onChangeText={(text) => handleAmountChange(subcategory.id, text, subcategory.budgeted_amount)}
-                            keyboardType="numeric"
-                            opacity={savingItems.has(subcategory.id) ? 0.5 : 1}
-                          />
-                        </XStack>
-                        {errorItems[subcategory.id] && (
-                          <Text fontSize={10} color="#ef4444" textAlign="right">
-                            {errorItems[subcategory.id]}
-                          </Text>
-                        )}
-                      </YStack>
+                          {errorItems[subcategory.id] && (
+                            <Text fontSize={10} color="#ef4444" textAlign="right">
+                              {errorItems[subcategory.id]}
+                            </Text>
+                          )}
+                        </YStack>
+                      </SwipeableBudgetItem>
                     ))}
                   </YStack>
                 )}
@@ -496,22 +547,27 @@ export default function Savings() {
         </KeyboardAwareScrollView>
       )}
 
-      {/* Budget Expense Button */}
-      <Button
-        position="absolute"
-        bottom={insets.bottom}
-        left={24}
-        right={24}
-        height={50}
+      {/* Floating Action Button */}
+      <Circle
+        size={64}
         backgroundColor="$primaryDeepGreen"
-        borderRadius={12}
-        pressStyle={{ opacity: 0.9 }}
+        position="absolute"
+        bottom={20}
+        alignSelf="center"
+        elevation={8}
+        shadowColor="$shadowColor"
+        shadowOffset={{ width: 0, height: 4 }}
+        shadowOpacity={0.3}
+        shadowRadius={8}
+        pressStyle={{
+          scale: 0.95,
+          opacity: 0.9,
+        }}
+        cursor="pointer"
         onPress={() => setShowAddCategorySheet(true)}
       >
-        <Text fontSize={16} fontWeight="600" color="white">
-          + Budget Expense
-        </Text>
-      </Button>
+        <Plus size={32} color="white" />
+      </Circle>
 
       {/* Add Budget Category Sheet */}
       <AddBudgetCategorySheet
