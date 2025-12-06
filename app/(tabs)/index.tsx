@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Platform, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Circle, Text, XStack, YStack } from "tamagui";
+import DonutChart from "../../src/components/DonutChart";
 import { getDashboardData } from "../../src/services/dashboardService";
 import { formatPeriodForAPI } from "../../src/services/transactionService";
 import type { DashboardDataResponse } from "../../src/types/dashboard";
@@ -74,6 +75,22 @@ export default function Overview() {
         ? prev.filter((id) => id !== categoryId)
         : [...prev, categoryId]
     );
+  };
+
+  const calculateBudgetSpentPercentage = () => {
+    if (!dashboardData) return 0;
+    const spending = parseFloat(dashboardData.summary.total_spending) || 0;
+    const budgeted = parseFloat(dashboardData.summary.total_budgeted) || 0;
+    if (budgeted === 0) return 0;
+    return Math.min(Math.round((spending / budgeted) * 100), 100);
+  };
+
+  const calculateIncomeSpentPercentage = () => {
+    if (!dashboardData) return 0;
+    const spending = parseFloat(dashboardData.summary.total_spending) || 0; 
+    const income = parseFloat(dashboardData.summary.total_income) || 0;
+    if (income === 0) return 0;
+    return Math.min(Math.round((spending / income) * 100), 100);
   };
 
   return (
@@ -266,8 +283,34 @@ export default function Overview() {
             </Text>
           </YStack>
         ) : (
-          /* Category Cards */
           <YStack padding={20} gap={16}>
+            {/* Donut Chart Card - Hidden when no budget set (for Expense tab) or no income (for Income tab) */}
+            {((selectedType === "EXPENSE" && parseFloat(dashboardData.summary.total_budgeted) > 0) ||
+              (selectedType === "INCOME" && parseFloat(dashboardData.summary.total_income) > 0)) && (
+              <YStack
+                backgroundColor="white"
+                borderRadius={16}
+                padding={16}
+                alignItems="center"
+              >
+                <DonutChart
+                  percentage={
+                    selectedType === "EXPENSE"
+                      ? calculateBudgetSpentPercentage()
+                      : calculateIncomeSpentPercentage()
+                  }
+                  primaryColor={selectedType === "EXPENSE" ? "#FACC15" : "#10B981"}
+                  centerText={`${selectedType === "EXPENSE" ? calculateBudgetSpentPercentage() : calculateIncomeSpentPercentage()}%`}
+                  subText={
+                    selectedType === "EXPENSE"
+                      ? "BUDGET SPENT"
+                      : `OF ${formatMonth(selectedMonth).toUpperCase().split(" ")[0]}'S\nINCOME IS SPENT`
+                  }
+                />
+              </YStack>
+            )}
+
+            {/* Category Cards */}
             {dashboardData.categories.map((category) => {
               const isExpanded = expandedCategories.includes(category.id);
 
