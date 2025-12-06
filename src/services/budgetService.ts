@@ -79,3 +79,25 @@ export async function fetchAvailableExpenseSubcategories(): Promise<Category[]> 
     })),
   }));
 }
+
+/**
+ * Fetch available income subcategories (not yet budgeted)
+ * @returns Categories with only available subcategories, transformed to match Category[] format
+ */
+export async function fetchAvailableIncomeSubcategories(): Promise<Category[]> {
+  const response = await apiClient.get<AvailableSubcategoriesResponse>(
+    "/savings/available-subcategories/?type=income"
+  );
+
+  // Transform to match existing Category[] format
+  return response.data.available_subcategories.map((cat) => ({
+    id: cat.category_id,
+    name: cat.category_name,
+    icon: cat.category_icon,
+    subcategories: cat.subcategories.map((sub) => ({
+      id: sub.id,
+      name: sub.name,
+      icon_round: sub.icon_round,
+    })),
+  }));
+}

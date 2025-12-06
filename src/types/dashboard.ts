@@ -1,7 +1,8 @@
 export interface DashboardSummary {
   total_spending: string;
   total_income: string;
-  net: string;
+  total_budgeted: string;
+  balance: string;
 }
 
 export interface SubcategoryExpense {

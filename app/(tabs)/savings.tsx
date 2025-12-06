@@ -1,10 +1,11 @@
-import { ChevronDown, Pencil, Plus } from "@tamagui/lucide-icons";
+import { ChevronDown, Pencil, Plus, Rocket } from "@tamagui/lucide-icons";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, Platform, RefreshControl } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Circle, Input, Text, XStack, YStack } from "tamagui";
 import AddBudgetCategorySheet from "../../src/components/AddBudgetCategorySheet";
+import AddIncomeSourceSheet from "../../src/components/AddIncomeSourceSheet";
 import SwipeableBudgetItem from "../../src/components/SwipeableBudgetItem";
 import { deleteBudgetedItem, getBudgetSummary, updateBudgetedItemAmount } from "../../src/services/budgetService";
 import type { BudgetSummaryResponse } from "../../src/types/budget";
@@ -24,6 +25,7 @@ export default function Savings() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [noBudgetFound, setNoBudgetFound] = useState(false);
 
   // State for inline editing
   const [editingAmounts, setEditingAmounts] = useState<Record<string, string>>({});
@@ -33,6 +35,7 @@ export default function Savings() {
 
   // State for Add Category sheet
   const [showAddCategorySheet, setShowAddCategorySheet] = useState(false);
+  const [showAddIncomeSheet, setShowAddIncomeSheet] = useState(false);
 
   const fetchBudgetData = async (isRefresh = false, silent = false) => {
     if (!silent) {
@@ -43,6 +46,7 @@ export default function Savings() {
       }
     }
     setError(null);
+    setNoBudgetFound(false);
     try {
       const data = await getBudgetSummary();
       setBudgetData(data);
@@ -55,7 +59,12 @@ export default function Savings() {
         setExpandedCategories(initialExpanded);
       }
     } catch (err: any) {
-      setError(err.message || "Failed to fetch budget data");
+      // Check for 404 "No active budget found" error
+      if (err.response?.status === 404 && err.response?.data?.detail?.includes("No active budget found")) {
+        setNoBudgetFound(true);
+      } else {
+        setError(err.message || "Failed to fetch budget data");
+      }
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -247,26 +256,87 @@ export default function Savings() {
         </XStack>
       </YStack>
 
-      {isLoading ? (
+      {/* Goals Tab - Coming Soon */}
+      {activeTab === "GOALS" && (
+        <YStack flex={1} alignItems="center" justifyContent="center" padding={32}>
+          <YStack marginBottom={24}>
+            <Rocket size={55} color="#1a4742" />
+          </YStack>
+          <Text
+            fontSize={36}
+            fontWeight="500"
+            color="#1a4742"
+            textAlign="center"
+            fontFamily="$body"
+          >
+            Coming Soon
+          </Text>
+          <Text
+            fontSize={16}
+            color="#6b7280"
+            textAlign="center"
+            marginTop={8}
+            lineHeight={24}
+          >
+            We're working hard to bring you this{"\n"}feature. Stay tuned for exciting updates!
+          </Text>
+        </YStack>
+      )}
+
+      {/* Budget Tab Content */}
+      {activeTab === "BUDGET" && isLoading ? (
         <YStack flex={1} alignItems="center" justifyContent="center" padding={40}>
           <ActivityIndicator size="large" color="#176458" />
           <Text fontSize={14} color="#7a7a7a" marginTop={12}>
             Loading budget...
           </Text>
         </YStack>
-      ) : error ? (
+      ) : activeTab === "BUDGET" && error ? (
         <YStack flex={1} alignItems="center" justifyContent="center" padding={40}>
           <Text fontSize={16} color="#ef4444" textAlign="center">
             {error}
           </Text>
         </YStack>
-      ) : !budgetData ? (
+      ) : activeTab === "BUDGET" && noBudgetFound ? (
+        /* No Budget Set Placeholder */
+        <YStack flex={1} alignItems="baseline" justifyContent="flex-start" padding={20}>
+          <YStack
+            backgroundColor="white"
+            borderRadius={16}
+            padding={20}
+            alignItems="center"
+            gap={16}
+            width="100%"
+          >
+            <Circle size={74} backgroundColor="#E5E7EB">
+              <Text fontSize={40} color="#9CA3AF">$</Text>
+            </Circle>
+            <Text fontSize={18} fontWeight="700" color="#333333" textAlign="center">
+              No Budget Set
+            </Text>
+            <Text fontSize={12} color="#6B7280" textAlign="center" lineHeight={18}>
+              Create a budget to track your spending and reach your goals.
+            </Text>
+            <Button
+              backgroundColor="#164a41"
+              borderRadius={12}
+              height={25}
+              paddingHorizontal={32}
+              pressStyle={{ opacity: 0.9 }}
+            >
+              <Text fontSize={12} fontWeight="600" color="white">
+                + Create Budget
+              </Text>
+            </Button>
+          </YStack>
+        </YStack>
+      ) : activeTab === "BUDGET" && !budgetData ? (
         <YStack flex={1} alignItems="center" justifyContent="center" padding={40}>
           <Text fontSize={16} color="#7a7a7a" textAlign="center">
             No budget data available
           </Text>
         </YStack>
-      ) : (
+      ) : activeTab === "BUDGET" && budgetData ? (
         <KeyboardAwareScrollView
           refreshControl={
             <RefreshControl
@@ -427,9 +497,7 @@ export default function Savings() {
                 marginTop={budgetData.income_breakdown.length > 0 ? 8 : 12}
                 paddingLeft={55}
                 pressStyle={{ opacity: 0.7 }}
-                onPress={() => {
-                  // TODO: Open sheet to add income source
-                }}
+                onPress={() => setShowAddIncomeSheet(true)}
               >
                 <Circle size={24} backgroundColor="#EAEAEA">
                   <Plus size={14} color="#333333" />
@@ -545,29 +613,31 @@ export default function Savings() {
             );
           })}
         </KeyboardAwareScrollView>
-      )}
+      ) : null}
 
-      {/* Floating Action Button */}
-      <Circle
-        size={64}
-        backgroundColor="$primaryDeepGreen"
-        position="absolute"
-        bottom={20}
-        alignSelf="center"
-        elevation={8}
-        shadowColor="$shadowColor"
-        shadowOffset={{ width: 0, height: 4 }}
-        shadowOpacity={0.3}
-        shadowRadius={8}
-        pressStyle={{
-          scale: 0.95,
-          opacity: 0.9,
-        }}
-        cursor="pointer"
-        onPress={() => setShowAddCategorySheet(true)}
-      >
-        <Plus size={32} color="white" />
-      </Circle>
+      {/* Floating Action Button - Only show on Budget tab when budget exists */}
+      {activeTab === "BUDGET" && !noBudgetFound && budgetData && (
+        <Circle
+          size={64}
+          backgroundColor="$primaryDeepGreen"
+          position="absolute"
+          bottom={20}
+          alignSelf="center"
+          elevation={8}
+          shadowColor="$shadowColor"
+          shadowOffset={{ width: 0, height: 4 }}
+          shadowOpacity={0.3}
+          shadowRadius={8}
+          pressStyle={{
+            scale: 0.95,
+            opacity: 0.9,
+          }}
+          cursor="pointer"
+          onPress={() => setShowAddCategorySheet(true)}
+        >
+          <Plus size={32} color="white" />
+        </Circle>
+      )}
 
       {/* Add Budget Category Sheet */}
       <AddBudgetCategorySheet
@@ -579,6 +649,19 @@ export default function Savings() {
           if (categoryId) {
             setExpandedCategories([categoryId]);
           }
+          // Refresh budget data silently
+          fetchBudgetData(true, true);
+        }}
+      />
+
+      {/* Add Income Source Sheet */}
+      <AddIncomeSourceSheet
+        open={showAddIncomeSheet}
+        onOpenChange={setShowAddIncomeSheet}
+        budgetId={budgetData?.budget_id}
+        onIncomeAdded={() => {
+          // Expand only the income category
+          setExpandedCategories(["income"]);
           // Refresh budget data silently
           fetchBudgetData(true, true);
         }}

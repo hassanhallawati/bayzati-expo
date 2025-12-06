@@ -152,7 +152,7 @@ export default function Overview() {
             alignItems="center"
           >
             <Text fontSize={16} fontWeight="600" color="white" textAlign="center">
-              {dashboardData?.summary.total_income || "0"} OMR
+              {dashboardData?.summary.total_budgeted || "0"} OMR
             </Text>
             <Text fontSize={10} fontWeight="600" color="white" marginTop={4}>
               BUDGET
@@ -184,7 +184,7 @@ export default function Overview() {
             alignItems="center"
           >
             <Text fontSize={16} fontWeight="600" color="white" textAlign="center">
-              {dashboardData?.summary.net || "0"} OMR
+              {dashboardData?.summary.balance || "0"} OMR
             </Text>
             <Text fontSize={10} fontWeight="600" color="white" marginTop={4}>
               BALANCE
@@ -259,35 +259,11 @@ export default function Overview() {
             </Text>
           </YStack>
         ) : !dashboardData || dashboardData.categories.length === 0 ? (
-          /* No Budget Set Placeholder */
-          <YStack
-            margin={20}
-            backgroundColor="white"
-            borderRadius={16}
-            padding={20}
-            alignItems="center"
-            gap={16}
-          >
-            <Circle size={74} backgroundColor="#E5E7EB">
-              <Text fontSize={40} color="#9CA3AF">$</Text>
-            </Circle>
-            <Text fontSize={18} fontWeight="700" color="#333333" textAlign="center">
-              No Budget Set
+          /* No Transactions Message */
+          <YStack padding={40} alignItems="center" justifyContent="center">
+            <Text fontSize={16} color="#7a7a7a" textAlign="center">
+              No transactions this month
             </Text>
-            <Text fontSize={12} color="#6B7280" textAlign="center" lineHeight={18}>
-              Create a budget to track your spending and reach your goals.
-            </Text>
-            <Button
-              backgroundColor="#164a41"
-              borderRadius={12}
-              height={25}
-              paddingHorizontal={32}
-              pressStyle={{ opacity: 0.9 }}
-            >
-              <Text fontSize={12} fontWeight="600" color="white">
-                + Create Budget
-              </Text>
-            </Button>
           </YStack>
         ) : (
           /* Category Cards */
@@ -320,7 +296,7 @@ export default function Overview() {
                     {/* Amount and Toggle */}
                     <XStack alignItems="center" gap={8}>
                       <Text fontSize={16} fontWeight="600" color="#333333">
-                        OMR {Math.abs(category.budgeted_amount - category.total_spent).toFixed(2)}
+                        OMR {category.total_spent.toFixed(2)}{category.budgeted_amount > 0 ? ` / ${category.budgeted_amount.toFixed(2)}` : ""}
                       </Text>
                       <Button
                         unstyled
@@ -366,7 +342,7 @@ export default function Overview() {
                             </Text>
                           </XStack>
                           <Text fontSize={14} color="#7a7a7a" textAlign="right">
-                            OMR {expense.amount}
+                            OMR {expense.amount}{parseFloat(expense.budgeted_amount) > 0 ? ` / ${expense.budgeted_amount}` : ""}
                           </Text>
                         </XStack>
                       ))}
