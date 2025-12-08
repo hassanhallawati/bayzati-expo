@@ -9,13 +9,7 @@ import AddIncomeSourceSheet from "../../src/components/AddIncomeSourceSheet";
 import SwipeableBudgetItem from "../../src/components/SwipeableBudgetItem";
 import { deleteBudgetedItem, getBudgetSummary, updateBudgetedItemAmount } from "../../src/services/budgetService";
 import type { BudgetSummaryResponse } from "../../src/types/budget";
-
-const getMediaBaseURL = () => {
-  if (Platform.OS === "android") {
-    return "http://10.0.2.2:8000";
-  }
-  return "https://dev.bayzati.com";
-};
+import { getMediaBaseURL } from "../../src/utils/media";
 
 export default function Savings() {
   const insets = useSafeAreaInsets();

@@ -5,15 +5,8 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { Button, Input, Sheet, Text, XStack, YStack } from "tamagui";
 import { createBudgetedItem, fetchAvailableExpenseSubcategories } from "../services/budgetService";
 import type { Subcategory } from "../types/category";
+import { getMediaBaseURL } from "../utils/media";
 import CategoryPickerSheet from "./CategoryPickerSheet";
-
-// Get the appropriate base URL for media files based on platform
-const getMediaBaseURL = () => {
-  if (Platform.OS === "android") {
-    return "http://10.0.2.2:8000";
-  }
-  return "https://dev.bayzati.com";
-};
 
 interface AddBudgetCategorySheetProps {
   open: boolean;

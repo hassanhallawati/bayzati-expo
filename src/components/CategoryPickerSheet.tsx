@@ -1,17 +1,10 @@
 import { ChevronDown, ChevronUp, Search, X } from "@tamagui/lucide-icons";
 import { useEffect, useState } from "react";
-import { Image, Platform, ScrollView } from "react-native";
+import { Image, ScrollView } from "react-native";
 import { Button, Circle, Input, Sheet, Text, XStack, YStack } from "tamagui";
 import { fetchCategoriesByType } from "../services/categoryService";
 import type { Category, Subcategory } from "../types/category";
-
-// Get the appropriate base URL for media files based on platform
-const getMediaBaseURL = () => {
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:8000';
-  }
-  return 'https://dev.bayzati.com'; // For iOS and web
-};
+import { getMediaBaseURL } from "../utils/media";
 
 interface CategoryPickerSheetProps {
   open: boolean;

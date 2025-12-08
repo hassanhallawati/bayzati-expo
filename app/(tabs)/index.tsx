@@ -1,20 +1,13 @@
 import { ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal } from "@tamagui/lucide-icons";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, Platform, ScrollView } from "react-native";
+import { ActivityIndicator, Image, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Circle, Text, XStack, YStack } from "tamagui";
 import DonutChart from "../../src/components/DonutChart";
 import { getDashboardData } from "../../src/services/dashboardService";
 import { formatPeriodForAPI } from "../../src/services/transactionService";
 import type { DashboardDataResponse } from "../../src/types/dashboard";
-
-// Get the appropriate base URL for media files based on platform
-const getMediaBaseURL = () => {
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:8000';
-  }
-  return 'https://dev.bayzati.com'; // For iOS and web
-};
+import { getMediaBaseURL } from "../../src/utils/media";
 
 export default function Overview() {
   const insets = useSafeAreaInsets();
@@ -338,7 +331,7 @@ export default function Overview() {
 
                     {/* Amount and Toggle */}
                     <XStack alignItems="center" gap={8}>
-                      <Text fontSize={16} fontWeight="600" color="#333333">
+                      <Text fontSize={14} fontWeight="600" color="#333333">
                         OMR {category.total_spent.toFixed(2)}{category.budgeted_amount > 0 ? ` / ${category.budgeted_amount.toFixed(2)}` : ""}
                       </Text>
                       <Button

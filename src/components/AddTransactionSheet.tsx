@@ -1,23 +1,16 @@
 import { Calendar, ChevronLeft, ChevronRight, FileText, Tag, X } from "@tamagui/lucide-icons";
 import { useEffect, useState } from "react";
-import { Image, Platform, ScrollView, TouchableOpacity } from "react-native";
+import { Image, ScrollView, TouchableOpacity } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { Button, Circle, Input, Sheet, Text, XStack, YStack } from "tamagui";
+import { Button, Input, Sheet, Text, XStack, YStack } from "tamagui";
 import { searchMerchants } from "../services/merchantService";
-import { createTransaction, updateTransaction, formatDateForAPI } from "../services/transactionService";
-import type { Merchant } from "../types/merchant";
+import { createTransaction, formatDateForAPI, updateTransaction } from "../services/transactionService";
 import type { Subcategory } from "../types/category";
+import type { Merchant } from "../types/merchant";
 import type { Transaction } from "../types/transaction";
-import CategoryPickerSheet from "./CategoryPickerSheet";
+import { getMediaBaseURL } from "../utils/media";
 import CalendarPickerSheet from "./CalendarPickerSheet";
-
-// Get the appropriate base URL for media files based on platform
-const getMediaBaseURL = () => {
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:8000';
-  }
-  return 'https://dev.bayzati.com'; // For iOS and web
-};
+import CategoryPickerSheet from "./CategoryPickerSheet";
 
 interface AddTransactionSheetProps {
   open: boolean;

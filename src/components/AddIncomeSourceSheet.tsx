@@ -5,13 +5,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { Button, Input, Sheet, Text, XStack, YStack } from "tamagui";
 import { createBudgetedItem, fetchAvailableIncomeSubcategories } from "../services/budgetService";
 import type { Category, Subcategory } from "../types/category";
-
-const getMediaBaseURL = () => {
-  if (Platform.OS === "android") {
-    return "http://10.0.2.2:8000";
-  }
-  return "https://dev.bayzati.com";
-};
+import { getMediaBaseURL } from "../utils/media";
 
 interface AddIncomeSourceSheetProps {
   open: boolean;

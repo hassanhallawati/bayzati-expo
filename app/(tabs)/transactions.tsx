@@ -1,19 +1,12 @@
 import { ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from "@tamagui/lucide-icons";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, Platform, RefreshControl, ScrollView } from "react-native";
+import { ActivityIndicator, Image, RefreshControl, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Circle, Text, XStack, YStack } from "tamagui";
 import AddTransactionSheet from "../../src/components/AddTransactionSheet";
 import { formatPeriodForAPI, getGroupedTransactions } from "../../src/services/transactionService";
 import type { GroupedTransactionsResponse, Transaction } from "../../src/types/transaction";
-
-// Get the appropriate base URL for media files based on platform
-const getMediaBaseURL = () => {
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:8000';
-  }
-  return 'https://dev.bayzati.com'; // For iOS and web
-};
+import { getMediaBaseURL } from "../../src/utils/media";
 
 export default function Transactions() {
   const insets = useSafeAreaInsets();
