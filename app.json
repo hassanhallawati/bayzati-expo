@@ -13,8 +13,10 @@
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
-        }
-      }
+        },
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "bayzati-app.bayzati"
     },
     "android": {
       "adaptiveIcon": {
@@ -51,6 +53,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fcedaba2-90bd-4434-a3fb-6e476fe18502"
+      }
     }
   }
 }

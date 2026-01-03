@@ -1,7 +1,6 @@
 import { Eye, EyeOff } from "@tamagui/lucide-icons";
-import { Image } from "expo-image";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable } from "react-native";
+import { Image, KeyboardAvoidingView, Platform, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
@@ -93,9 +92,9 @@ export default function Login() {
                 marginBottom="$4"
               >
                 <Image
-                  source={{ uri: "https://www.figma.com/api/mcp/asset/0aa3050e-e5f5-4dbe-8880-427944e28e97" }}
+                  source={require("../assets/images/bayzati-login-logo.png")}
                   style={{ width: 68, height: 100 }}
-                  contentFit="contain"
+                  resizeMode="contain"
                 />
               </YStack>
 

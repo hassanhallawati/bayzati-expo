@@ -1,7 +1,10 @@
 import { BarChart3, ChartPie, Gem, Receipt, Settings } from "@tamagui/lucide-icons";
 import { Tabs } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
@@ -11,8 +14,8 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: "#FFFFFF",
           borderTopWidth: 0,
-          height: 67,
-          paddingBottom: 12,
+          height: 67 + insets.bottom,
+          paddingBottom: 12 + insets.bottom,
           paddingTop: 12,
           paddingLeft: 16,
           paddingRight: 16,
