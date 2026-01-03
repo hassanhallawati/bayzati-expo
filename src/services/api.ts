@@ -1,29 +1,7 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import { Platform } from 'react-native';
 import { clearTokens, getAccessToken, getRefreshToken, setAccessToken } from './tokenManager';
 
-/**
- * Get the appropriate API base URL based on platform
- * - Web: localhost works fine
- * - iOS: Use computer's local IP address
- * - Android: Use 10.0.2.2 (Android emulator special address for host machine)
- */
-const getAPIBaseURL = () => {
-  if (!__DEV__) {
-    return 'https://your-production-api.com/api/v1';
-  }
-
-  // Development URLs
-  if (Platform.OS === 'android') {
-    return 'https://dev.bayzati.com/api/v1';
-  }
-
-  // For iOS simulator and web, use localhost or your computer's IP
-  // iOS simulator can use localhost, but physical devices need the IP
-  return 'https://dev.bayzati.com/api/v1'; // Replace with your computer's IP if needed
-};
-
-const API_BASE_URL = getAPIBaseURL();
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://staging.bayzati.com/api/v1';
 
 /**
  * Create axios instance with default configuration
