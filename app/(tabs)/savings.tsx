@@ -7,7 +7,8 @@ import { Button, Circle, Input, Text, XStack, YStack } from "tamagui";
 import AddBudgetCategorySheet from "../../src/components/AddBudgetCategorySheet";
 import AddIncomeSourceSheet from "../../src/components/AddIncomeSourceSheet";
 import SwipeableBudgetItem from "../../src/components/SwipeableBudgetItem";
-import { deleteBudgetedItem, getBudgetSummary, updateBudgetedItemAmount } from "../../src/services/budgetService";
+import { getUserProfile } from "../../src/services/authService";
+import { createBudget, deleteBudgetedItem, getBudgetSummary, updateBudgetedItemAmount } from "../../src/services/budgetService";
 import type { BudgetSummaryResponse } from "../../src/types/budget";
 import { getMediaBaseURL } from "../../src/utils/media";
 
@@ -20,6 +21,7 @@ export default function Savings() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [noBudgetFound, setNoBudgetFound] = useState(false);
+  const [isCreatingBudget, setIsCreatingBudget] = useState(false);
 
   // State for inline editing
   const [editingAmounts, setEditingAmounts] = useState<Record<string, string>>({});
@@ -187,6 +189,37 @@ export default function Savings() {
     }
   };
 
+  // Handle create budget
+  const handleCreateBudget = async () => {
+    setIsCreatingBudget(true);
+    try {
+      // Get user profile for budget name
+      const userProfile = await getUserProfile();
+      const displayName = `${userProfile.first_name} ${userProfile.last_name}`.trim() || userProfile.email.split("@")[0];
+
+      await createBudget({
+        name: `${displayName} - monthly budget`,
+        is_active: true,
+        items: [
+          { type: "INCOME", subcategory_id: "dd380dc6-4222-454a-a7ee-6731d3fb5b99", amount: "0.000" },
+          { type: "EXPENSE", subcategory_id: "0007978e-aab2-45f1-bca0-bb3edaa96206", amount: "0.000" },
+          { type: "EXPENSE", subcategory_id: "befe605c-4b95-4430-be14-40e475361b85", amount: "0.000" },
+          { type: "EXPENSE", subcategory_id: "d82c561d-285a-43e8-8bb6-cd859c67112b", amount: "0.000" },
+          { type: "EXPENSE", subcategory_id: "df1f0a44-329c-4eaa-ab4d-0f8e911531ed", amount: "0.000" },
+          { type: "EXPENSE", subcategory_id: "164ed897-0f49-498d-a1b5-eb9a341c88b0", amount: "0.000" },
+          { type: "EXPENSE", subcategory_id: "02f97b8c-4956-4416-86c7-45979ef12dd9", amount: "0.000" },
+        ],
+      });
+
+      // Refresh to show the new budget
+      fetchBudgetData(false, false);
+    } catch (error) {
+      console.error("Failed to create budget:", error);
+    } finally {
+      setIsCreatingBudget(false);
+    }
+  };
+
   return (
     <YStack flex={1} backgroundColor="#F4F4F5">
       {/* Header */}
@@ -317,10 +350,17 @@ export default function Savings() {
               height={25}
               paddingHorizontal={32}
               pressStyle={{ opacity: 0.9 }}
+              onPress={handleCreateBudget}
+              disabled={isCreatingBudget}
+              opacity={isCreatingBudget ? 0.7 : 1}
             >
-              <Text fontSize={12} fontWeight="600" color="white">
-                + Create Budget
-              </Text>
+              {isCreatingBudget ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text fontSize={12} fontWeight="600" color="white">
+                  + Create Budget
+                </Text>
+              )}
             </Button>
           </YStack>
         </YStack>

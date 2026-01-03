@@ -1,25 +1,57 @@
 import { Bell, Copy, Crown, Download, Globe, HelpCircle, Mail, Trash2 } from "@tamagui/lucide-icons";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Circle, Text, XStack, YStack } from "tamagui";
 import { useAuth } from "../../src/hooks/useAuth";
-import { useRouter } from "expo-router";
+import { getEmailInbox } from "../../src/services/accountService";
+import { getUserProfile } from "../../src/services/authService";
+import type { EmailInbox } from "../../src/types/account";
+import type { UserProfile } from "../../src/types/auth";
 
 export default function Settings() {
   const insets = useSafeAreaInsets();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const router = useRouter();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [emailInbox, setEmailInbox] = useState<EmailInbox | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [profile, inbox] = await Promise.all([
+          getUserProfile(),
+          getEmailInbox(),
+        ]);
+        setUserProfile(profile);
+        setEmailInbox(inbox);
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleLogout = async () => {
     await logout();
     router.replace("/login");
   };
 
+  // Get display name from profile
+  const getDisplayName = () => {
+    if (!userProfile) return "";
+    const fullName = `${userProfile.first_name} ${userProfile.last_name}`.trim();
+    if (fullName) return fullName;
+    // Fallback: parse email before @
+    return userProfile.email.split("@")[0];
+  };
+
   // Get user initials for avatar
-  const getInitials = (email: string | undefined) => {
-    if (!email) return "U";
-    const name = email.split("@")[0];
-    return name.substring(0, 2).toUpperCase();
+  const getInitials = () => {
+    const displayName = getDisplayName();
+    if (!displayName) return "U";
+    return displayName.substring(0, 2).toUpperCase();
   };
 
   const handleCopyEmail = () => {
@@ -48,21 +80,19 @@ export default function Settings() {
             {/* Avatar */}
             <Circle size={67} backgroundColor="$primaryDeepGreen">
               <Text fontSize={32} fontWeight="700" color="white">
-                {getInitials(user?.email)}
+                {getInitials()}
               </Text>
             </Circle>
 
             {/* User Info */}
             <YStack flex={1}>
               <Text fontSize={20} fontWeight="600" color="#111827">
-                John Doe
+                {getDisplayName()}
               </Text>
               <Text fontSize={14} color="#6B7280" marginTop={2}>
-                {user?.email || "hihihihihihih@hotmailhi.com"}
+                {userProfile?.email || ""}
               </Text>
-              <Text fontSize={14} color="#6B7280" marginTop={2}>
-                Free User
-              </Text>
+
             </YStack>
           </XStack>
         </YStack>
@@ -80,18 +110,24 @@ export default function Settings() {
             borderRadius={12}
             padding={12}
             alignItems="center"
-            justifyContent="space-between"
+            gap={8}
           >
-            <Text fontSize={14} color="black">
-              transactions.john@bayzati.com
+            <Text
+              flex={1}
+              fontSize={12}
+              color="black"
+              numberOfLines={1}
+              ellipsizeMode="middle"
+            >
+              {emailInbox?.email_address || ""}
             </Text>
             <Button
               unstyled
-              padding={0}
+              padding={4}
               onPress={handleCopyEmail}
               pressStyle={{ opacity: 0.7 }}
             >
-              <Copy size={16} color="#111827" />
+              <Copy size={18} color="#111827" />
             </Button>
           </XStack>
         </YStack>
@@ -102,143 +138,8 @@ export default function Settings() {
             Settings
           </Text>
 
-          {/* Settings Grid - Row 1 */}
+          {/* Settings Grid - Row 1: Help & Support and Logout */}
           <XStack gap={16} marginBottom={16}>
-            {/* Premium Card */}
-            <YStack
-              flex={1}
-              backgroundColor="#FAFAFA"
-              borderRadius={12}
-              padding={16}
-              gap={12}
-            >
-              <Circle size={40} backgroundColor="#FDF2C4">
-                <Crown size={18} color="#D4AF37" />
-              </Circle>
-              <YStack>
-                <Text fontSize={12} fontWeight="600" color="#D4AF37">
-                  Premium
-                </Text>
-                <Text fontSize={12} color="black" marginTop={4}>
-                  Unlock full features
-                </Text>
-              </YStack>
-            </YStack>
-
-            {/* Notifications Card */}
-            <YStack
-              flex={1}
-              backgroundColor="#FAFAFA"
-              borderRadius={12}
-              padding={16}
-              gap={12}
-            >
-              <Circle size={40} backgroundColor="$primaryDeepGreen">
-                <Bell size={14} color="white" />
-              </Circle>
-              <YStack>
-                <Text fontSize={12} fontWeight="600" color="black">
-                  Notifications
-                </Text>
-                <Text fontSize={12} color="black" marginTop={4}>
-                  Manage alerts
-                </Text>
-              </YStack>
-            </YStack>
-          </XStack>
-
-          {/* Settings Grid - Row 2 */}
-          <XStack gap={16} marginBottom={16}>
-            {/* Automate Expenses Card */}
-            <YStack
-              flex={1}
-              backgroundColor="#FAFAFA"
-              borderRadius={12}
-              padding={16}
-              gap={12}
-            >
-              <Circle size={40} backgroundColor="$primaryDeepGreen">
-                <Mail size={17} color="white" />
-              </Circle>
-              <YStack>
-                <Text fontSize={12} fontWeight="600" color="black">
-                  Automate Expenses
-                </Text>
-                <Text fontSize={12} color="black" marginTop={4} lineHeight={16}>
-                  Manage automated expense tracking
-                </Text>
-              </YStack>
-            </YStack>
-
-            {/* Language & Currency Card */}
-            <YStack
-              flex={1}
-              backgroundColor="#FAFAFA"
-              borderRadius={12}
-              padding={16}
-              gap={12}
-            >
-              <Circle size={40} backgroundColor="$primaryDeepGreen">
-                <Globe size={16} color="white" />
-              </Circle>
-              <YStack>
-                <Text fontSize={12} fontWeight="600" color="black">
-                  Language & Currency
-                </Text>
-                <Text fontSize={12} color="black" marginTop={4} lineHeight={16}>
-                  Choose app language and primary currency
-                </Text>
-              </YStack>
-            </YStack>
-          </XStack>
-
-          {/* Settings Grid - Row 3 */}
-          <XStack gap={16} marginBottom={16}>
-            {/* Export Data Card */}
-            <YStack
-              flex={1}
-              backgroundColor="#FAFAFA"
-              borderRadius={12}
-              padding={16}
-              gap={12}
-            >
-              <Circle size={40} backgroundColor="$primaryDeepGreen">
-                <Download size={16} color="white" />
-              </Circle>
-              <YStack>
-                <Text fontSize={12} fontWeight="600" color="black">
-                  Export Data
-                </Text>
-                <Text fontSize={12} color="black" marginTop={4}>
-                  Download transactions
-                </Text>
-              </YStack>
-            </YStack>
-
-            {/* Reset App Card */}
-            <YStack
-              flex={1}
-              backgroundColor="#FAFAFA"
-              borderRadius={12}
-              padding={16}
-              gap={12}
-            >
-              <Circle size={40} backgroundColor="$primaryDeepGreen">
-                <Trash2 size={14} color="white" />
-              </Circle>
-              <YStack>
-                <Text fontSize={12} fontWeight="600" color="black">
-                  Reset App
-                </Text>
-                <Text fontSize={12} color="black" marginTop={4}>
-                  Clear user data
-                </Text>
-              </YStack>
-            </YStack>
-          </XStack>
-
-          {/* Settings Grid - Row 4 */}
-          <XStack gap={16}>
             {/* Help & Support Card */}
             <YStack
               flex={1}
@@ -284,12 +185,147 @@ export default function Settings() {
               </YStack>
             </YStack>
           </XStack>
+
+          {/* Settings Grid - Row 2: Premium and Notifications (Disabled) */}
+          <XStack gap={16} marginBottom={16}>
+            {/* Premium Card - Disabled */}
+            <YStack
+              flex={1}
+              backgroundColor="#FAFAFA"
+              borderRadius={12}
+              padding={16}
+              gap={12}
+            >
+              <Circle size={40} backgroundColor="#E5E7EB">
+                <Crown size={18} color="#9CA3AF" />
+              </Circle>
+              <YStack>
+                <Text fontSize={12} fontWeight="600" color="#9CA3AF">
+                  Premium
+                </Text>
+                <Text fontSize={12} color="#9CA3AF" marginTop={4}>
+                  Coming soon
+                </Text>
+              </YStack>
+            </YStack>
+
+            {/* Notifications Card - Disabled */}
+            <YStack
+              flex={1}
+              backgroundColor="#FAFAFA"
+              borderRadius={12}
+              padding={16}
+              gap={12}
+            >
+              <Circle size={40} backgroundColor="#E5E7EB">
+                <Bell size={14} color="#9CA3AF" />
+              </Circle>
+              <YStack>
+                <Text fontSize={12} fontWeight="600" color="#9CA3AF">
+                  Notifications
+                </Text>
+                <Text fontSize={12} color="#9CA3AF" marginTop={4}>
+                  Coming soon
+                </Text>
+              </YStack>
+            </YStack>
+          </XStack>
+
+          {/* Settings Grid - Row 3: Automate Expenses and Language & Currency (Disabled) */}
+          <XStack gap={16} marginBottom={16}>
+            {/* Automate Expenses Card - Disabled */}
+            <YStack
+              flex={1}
+              backgroundColor="#FAFAFA"
+              borderRadius={12}
+              padding={16}
+              gap={12}
+            >
+              <Circle size={40} backgroundColor="#E5E7EB">
+                <Mail size={17} color="#9CA3AF" />
+              </Circle>
+              <YStack>
+                <Text fontSize={12} fontWeight="600" color="#9CA3AF">
+                  Automate Expenses
+                </Text>
+                <Text fontSize={12} color="#9CA3AF" marginTop={4} lineHeight={16}>
+                  Coming soon
+                </Text>
+              </YStack>
+            </YStack>
+
+            {/* Language & Currency Card - Disabled */}
+            <YStack
+              flex={1}
+              backgroundColor="#FAFAFA"
+              borderRadius={12}
+              padding={16}
+              gap={12}
+            >
+              <Circle size={40} backgroundColor="#E5E7EB">
+                <Globe size={16} color="#9CA3AF" />
+              </Circle>
+              <YStack>
+                <Text fontSize={12} fontWeight="600" color="#9CA3AF">
+                  Language & Currency
+                </Text>
+                <Text fontSize={12} color="#9CA3AF" marginTop={4} lineHeight={16}>
+                  Coming soon
+                </Text>
+              </YStack>
+            </YStack>
+          </XStack>
+
+          {/* Settings Grid - Row 4: Export Data and Reset App (Disabled) */}
+          <XStack gap={16}>
+            {/* Export Data Card - Disabled */}
+            <YStack
+              flex={1}
+              backgroundColor="#FAFAFA"
+              borderRadius={12}
+              padding={16}
+              gap={12}
+            >
+              <Circle size={40} backgroundColor="#E5E7EB">
+                <Download size={16} color="#9CA3AF" />
+              </Circle>
+              <YStack>
+                <Text fontSize={12} fontWeight="600" color="#9CA3AF">
+                  Export Data
+                </Text>
+                <Text fontSize={12} color="#9CA3AF" marginTop={4}>
+                  Coming soon
+                </Text>
+              </YStack>
+            </YStack>
+
+            {/* Reset App Card - Disabled */}
+            <YStack
+              flex={1}
+              backgroundColor="#FAFAFA"
+              borderRadius={12}
+              padding={16}
+              gap={12}
+            >
+              <Circle size={40} backgroundColor="#E5E7EB">
+                <Trash2 size={14} color="#9CA3AF" />
+              </Circle>
+              <YStack>
+                <Text fontSize={12} fontWeight="600" color="#9CA3AF">
+                  Reset App
+                </Text>
+                <Text fontSize={12} color="#9CA3AF" marginTop={4}>
+                  Coming soon
+                </Text>
+              </YStack>
+            </YStack>
+          </XStack>
         </YStack>
 
         {/* App Version Footer */}
         <YStack alignItems="center" paddingBottom={20}>
           <Text fontSize={12} color="#9CA3AF" textAlign="center">
-            App Version v1.2.3 (tap to view release notes)
+            App Version v0.1.0 (tap to view release notes)
           </Text>
         </YStack>
       </ScrollView>

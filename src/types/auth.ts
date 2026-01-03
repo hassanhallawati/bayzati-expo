@@ -27,6 +27,14 @@ export interface User {
   // Add other user fields as needed
 }
 
+export interface UserProfile {
+  pk: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+}
+
 export interface TokenData {
   accessToken: string | null;
   refreshToken: string | null;

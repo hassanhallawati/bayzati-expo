@@ -10,6 +10,7 @@ import {
   LoginResponse,
   RefreshTokenResponse,
   User,
+  UserProfile,
   ApiError,
   AuthError,
 } from '../types/auth';
@@ -82,11 +83,23 @@ export async function refreshAccessToken(): Promise<string> {
 }
 
 /**
- * Get current user profile
+ * Get current user profile (legacy endpoint)
  */
 export async function getCurrentUser(): Promise<User> {
   try {
     const response = await apiClient.get<User>('/auth/me/');
+    return response.data;
+  } catch (error) {
+    throw handleAuthError(error);
+  }
+}
+
+/**
+ * Get user profile details
+ */
+export async function getUserProfile(): Promise<UserProfile> {
+  try {
+    const response = await apiClient.get<UserProfile>('/auth/user/');
     return response.data;
   } catch (error) {
     throw handleAuthError(error);

@@ -80,3 +80,22 @@ export interface CreateBudgetedItemResponse {
   };
   amount: string;
 }
+
+// Types for creating a new budget
+export interface CreateBudgetItem {
+  type: "INCOME" | "EXPENSE";
+  subcategory_id: string;
+  amount: string;
+}
+
+export interface CreateBudgetRequest {
+  name: string;
+  is_active: boolean;
+  items: CreateBudgetItem[];
+}
+
+export interface CreateBudgetResponse {
+  id: string;
+  name: string;
+  is_active: boolean;
+}

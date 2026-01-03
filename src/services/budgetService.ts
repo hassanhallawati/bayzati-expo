@@ -3,6 +3,8 @@ import type {
   BudgetSummaryResponse,
   CreateBudgetedItemRequest,
   CreateBudgetedItemResponse,
+  CreateBudgetRequest,
+  CreateBudgetResponse,
 } from "../types/budget";
 import type { Category } from "../types/category";
 import apiClient from "./api";
@@ -100,4 +102,19 @@ export async function fetchAvailableIncomeSubcategories(): Promise<Category[]> {
       icon_round: sub.icon_round,
     })),
   }));
+}
+
+/**
+ * Create a new budget with predefined items
+ * @param data - The budget data including name, is_active, and items
+ * @returns Created budget object
+ */
+export async function createBudget(
+  data: CreateBudgetRequest
+): Promise<CreateBudgetResponse> {
+  const response = await apiClient.post<CreateBudgetResponse>(
+    "/savings/budgets/",
+    data
+  );
+  return response.data;
 }
