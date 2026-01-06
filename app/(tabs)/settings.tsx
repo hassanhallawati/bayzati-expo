@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Circle, Text, XStack, YStack } from "tamagui";
+import ComingSoonSheet from "../../src/components/ComingSoonSheet";
 import { useAuth } from "../../src/hooks/useAuth";
 import { getEmailInbox } from "../../src/services/accountService";
 import { getUserProfile } from "../../src/services/authService";
@@ -16,6 +17,7 @@ export default function Settings() {
   const router = useRouter();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [emailInbox, setEmailInbox] = useState<EmailInbox | null>(null);
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -147,6 +149,9 @@ export default function Settings() {
               borderRadius={12}
               padding={16}
               gap={12}
+              onPress={() => setShowComingSoon(true)}
+              pressStyle={{ opacity: 0.7 }}
+              cursor="pointer"
             >
               <Circle size={40} backgroundColor="$primaryDeepGreen">
                 <HelpCircle size={16} color="white" />
@@ -329,6 +334,13 @@ export default function Settings() {
           </Text>
         </YStack>
       </ScrollView>
+
+      {/* Coming Soon Sheet */}
+      <ComingSoonSheet
+        open={showComingSoon}
+        onOpenChange={setShowComingSoon}
+        description={"For assistance during Beta, contact us at support@bayzati.com"}
+      />
     </YStack>
   );
 }

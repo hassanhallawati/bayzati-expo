@@ -1,8 +1,9 @@
-import { ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal } from "@tamagui/lucide-icons";
+import { ChevronDown, ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Circle, Text, XStack, YStack } from "tamagui";
+import ComingSoonSheet from "../../src/components/ComingSoonSheet";
 import DonutChart from "../../src/components/DonutChart";
 import { getDashboardData } from "../../src/services/dashboardService";
 import { formatPeriodForAPI } from "../../src/services/transactionService";
@@ -17,6 +18,7 @@ export default function Overview() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   // Fetch dashboard data when month or type changes
   useEffect(() => {
@@ -141,14 +143,8 @@ export default function Overview() {
             </Button>
           </XStack>
 
-          {/* Filter Icon */}
-          <Button
-            unstyled
-            padding={0}
-            pressStyle={{ opacity: 0.7 }}
-          >
-            <SlidersHorizontal size={24} color="white" />
-          </Button>
+          {/* Filter Icon - hidden placeholder for spacing */}
+          <YStack width={24} />
         </XStack>
 
         {/* Summary Cards */}
@@ -390,6 +386,12 @@ export default function Overview() {
           </YStack>
         )}
       </ScrollView>
+
+      {/* Coming Soon Sheet */}
+      <ComingSoonSheet
+        open={showComingSoon}
+        onOpenChange={setShowComingSoon}
+      />
     </YStack>
   );
 }

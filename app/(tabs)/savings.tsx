@@ -1,4 +1,4 @@
-import { ChevronDown, Pencil, Plus, Rocket } from "@tamagui/lucide-icons";
+import { ChevronDown, Plus, Rocket } from "@tamagui/lucide-icons";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, Platform, RefreshControl } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -237,20 +237,8 @@ export default function Savings() {
             Savings
           </Text>
 
-          {/* Edit Button */}
-          <Button
-            unstyled
-            padding={0}
-            backgroundColor="rgba(255, 255, 255, 0.1)"
-            width={40}
-            height={40}
-            borderRadius={20}
-            alignItems="center"
-            justifyContent="center"
-            pressStyle={{ opacity: 0.7 }}
-          >
-            <Pencil size={18} color="white" />
-          </Button>
+          {/* Edit Button - hidden placeholder for spacing */}
+          <YStack width={40} />
         </XStack>
 
         {/* Tabs */}

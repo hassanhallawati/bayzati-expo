@@ -1,8 +1,8 @@
 import { Eye, EyeOff } from "@tamagui/lucide-icons";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Image, KeyboardAvoidingView, Platform, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
 import {
   Button,
   Input,
@@ -12,6 +12,7 @@ import {
   XStack,
   YStack,
 } from "tamagui";
+import ComingSoonSheet from "../src/components/ComingSoonSheet";
 import { useAuth } from "../src/hooks/useAuth";
 
 export default function Login() {
@@ -21,6 +22,7 @@ export default function Login() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [generalError, setGeneralError] = useState("");
+  const [showComingSoon, setShowComingSoon] = useState(false);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { login, isLoading } = useAuth();
@@ -218,10 +220,7 @@ export default function Login() {
               <Button
                 chromeless
                 size="$2"
-                onPress={() => {
-                  // Handle forgot password
-                  console.log("Forgot password");
-                }}
+                onPress={() => setShowComingSoon(true)}
                 padding={0}
               >
                 <Text fontSize={12} color="$primaryGreen">
@@ -251,12 +250,7 @@ export default function Login() {
           </YStack>
 
           {/* Sign Up Link */}
-          <Pressable
-            onPress={() => {
-              // Handle sign up navigation
-              console.log("Navigate to sign up");
-            }}
-          >
+          <Pressable onPress={() => setShowComingSoon(true)}>
             <Text fontSize={13} color="$primaryGreen" textAlign="center" marginTop="$6">
               Don't have an account?{" "}
               <Text
@@ -271,6 +265,13 @@ export default function Login() {
           </Pressable>
         </YStack>
       </ScrollView>
+
+      {/* Coming Soon Sheet */}
+      <ComingSoonSheet
+        open={showComingSoon}
+        onOpenChange={setShowComingSoon}
+        description={"We're currently in Beta. To sign up or reset your password, contact us at support@bayzati.com"}
+      />
     </KeyboardAvoidingView>
   );
 }

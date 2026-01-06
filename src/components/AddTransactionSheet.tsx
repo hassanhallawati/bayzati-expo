@@ -301,6 +301,7 @@ export default function AddTransactionSheet({ open, onOpenChange, transaction, o
         }
       } else {
         // Add mode - create new transaction
+        console.log("Creating transaction with request body:", JSON.stringify(transactionData, null, 2));
         await createTransaction(transactionData);
 
         // Success - reset form and close modal

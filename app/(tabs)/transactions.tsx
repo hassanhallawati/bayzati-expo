@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from "@tamagui/lucide-icons";
+import { ChevronLeft, ChevronRight, Plus } from "@tamagui/lucide-icons";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, RefreshControl, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -159,14 +159,8 @@ export default function Transactions() {
             </Button>
           </XStack>
 
-          {/* Filter Icon */}
-          <Button
-            unstyled
-            padding={0}
-            pressStyle={{ opacity: 0.7 }}
-          >
-            <SlidersHorizontal size={24} color="white" />
-          </Button>
+          {/* Filter Icon - hidden placeholder for spacing */}
+          <YStack width={24} />
         </XStack>
       </YStack>
 
