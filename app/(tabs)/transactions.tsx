@@ -1,9 +1,10 @@
-import { ChevronLeft, ChevronRight, Plus } from "@tamagui/lucide-icons";
+import { ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from "@tamagui/lucide-icons";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, RefreshControl, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Circle, Text, XStack, YStack } from "tamagui";
 import AddTransactionSheet from "../../src/components/AddTransactionSheet";
+import ComingSoonSheet from "../../src/components/ComingSoonSheet";
 import { formatPeriodForAPI, getGroupedTransactions } from "../../src/services/transactionService";
 import type { GroupedTransactionsResponse, Transaction } from "../../src/types/transaction";
 import { getMediaBaseURL } from "../../src/utils/media";
@@ -17,6 +18,7 @@ export default function Transactions() {
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   // Fetch transactions when month changes
   useEffect(() => {
@@ -159,8 +161,15 @@ export default function Transactions() {
             </Button>
           </XStack>
 
-          {/* Filter Icon - hidden placeholder for spacing */}
-          <YStack width={24} />
+          {/* Filter Icon */}
+          <Button
+            unstyled
+            padding={0}
+            pressStyle={{ opacity: 0.7 }}
+            onPress={() => setShowComingSoon(true)}
+          >
+            <SlidersHorizontal size={24} color="white" />
+          </Button>
         </XStack>
       </YStack>
 
@@ -248,7 +257,7 @@ export default function Transactions() {
                           {transaction.type === "INCOME" ? transaction.subcategory : transaction.merchant}
                         </Text>
                         <Text fontSize={12} color="$textSecondary">
-                          {transaction.category}
+                          {transaction.type === "INCOME" ? transaction.category : transaction.subcategory}
                         </Text>
                       </YStack>
 
@@ -298,6 +307,13 @@ export default function Transactions() {
         transaction={selectedTransaction}
         onTransactionCreated={handleTransactionCreated}
         onTransactionUpdated={handleTransactionUpdated}
+      />
+
+      {/* Coming Soon Sheet */}
+      <ComingSoonSheet
+        open={showComingSoon}
+        onOpenChange={setShowComingSoon}
+        description={"Looking for additional filters? No worries, we're working on it!"}
       />
     </YStack>
   );

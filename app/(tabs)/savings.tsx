@@ -1,4 +1,4 @@
-import { ChevronDown, Plus, Rocket } from "@tamagui/lucide-icons";
+import { ChevronDown, Pencil, Plus, Rocket } from "@tamagui/lucide-icons";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, Platform, RefreshControl } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Circle, Input, Text, XStack, YStack } from "tamagui";
 import AddBudgetCategorySheet from "../../src/components/AddBudgetCategorySheet";
 import AddIncomeSourceSheet from "../../src/components/AddIncomeSourceSheet";
+import ComingSoonSheet from "../../src/components/ComingSoonSheet";
 import SwipeableBudgetItem from "../../src/components/SwipeableBudgetItem";
 import { getUserProfile } from "../../src/services/authService";
 import { createBudget, deleteBudgetedItem, getBudgetSummary, updateBudgetedItemAmount } from "../../src/services/budgetService";
@@ -32,6 +33,7 @@ export default function Savings() {
   // State for Add Category sheet
   const [showAddCategorySheet, setShowAddCategorySheet] = useState(false);
   const [showAddIncomeSheet, setShowAddIncomeSheet] = useState(false);
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   const fetchBudgetData = async (isRefresh = false, silent = false) => {
     if (!silent) {
@@ -237,8 +239,21 @@ export default function Savings() {
             Savings
           </Text>
 
-          {/* Edit Button - hidden placeholder for spacing */}
-          <YStack width={40} />
+          {/* Edit Button */}
+          <Button
+            unstyled
+            padding={0}
+            backgroundColor="rgba(255, 255, 255, 0.1)"
+            width={40}
+            height={40}
+            borderRadius={20}
+            alignItems="center"
+            justifyContent="center"
+            pressStyle={{ opacity: 0.7 }}
+            onPress={() => setShowComingSoon(true)}
+          >
+            <Pencil size={18} color="white" />
+          </Button>
         </XStack>
 
         {/* Tabs */}
@@ -687,6 +702,13 @@ export default function Savings() {
           // Refresh budget data silently
           fetchBudgetData(true, true);
         }}
+      />
+
+      {/* Coming Soon Sheet */}
+      <ComingSoonSheet
+        open={showComingSoon}
+        onOpenChange={setShowComingSoon}
+        description={"You'll be able to add and manage multiple budgets soon! stay tuned.."}
       />
     </YStack>
   );

@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Circle, Text, XStack, YStack } from "tamagui";
-import ComingSoonSheet from "../../src/components/ComingSoonSheet";
 import DonutChart from "../../src/components/DonutChart";
 import { getDashboardData } from "../../src/services/dashboardService";
 import { formatPeriodForAPI } from "../../src/services/transactionService";
@@ -18,7 +17,6 @@ export default function Overview() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
-  const [showComingSoon, setShowComingSoon] = useState(false);
 
   // Fetch dashboard data when month or type changes
   useEffect(() => {
@@ -89,7 +87,7 @@ export default function Overview() {
   };
 
   return (
-    <YStack flex={1} backgroundColor="#F4F4F5" position="relative">
+    <YStack flex={1} backgroundColor="#F4F4F5">
       {/* Header */}
       <YStack
         backgroundColor="$primaryDeepGreen"
@@ -143,7 +141,7 @@ export default function Overview() {
             </Button>
           </XStack>
 
-          {/* Filter Icon - hidden placeholder for spacing */}
+          {/* Placeholder for spacing */}
           <YStack width={24} />
         </XStack>
 
@@ -387,11 +385,6 @@ export default function Overview() {
         )}
       </ScrollView>
 
-      {/* Coming Soon Sheet */}
-      <ComingSoonSheet
-        open={showComingSoon}
-        onOpenChange={setShowComingSoon}
-      />
     </YStack>
   );
 }
