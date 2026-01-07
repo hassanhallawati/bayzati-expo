@@ -330,7 +330,7 @@ export default function Settings() {
         {/* App Version Footer */}
         <YStack alignItems="center" paddingBottom={20}>
           <Text fontSize={12} color="#9CA3AF" textAlign="center">
-            App Version v0.1.0 (tap to view release notes)
+            App Version v1.0.2 Beta
           </Text>
         </YStack>
       </ScrollView>
