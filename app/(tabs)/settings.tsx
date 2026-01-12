@@ -1,3 +1,4 @@
+import * as Clipboard from "expo-clipboard";
 import { Bell, Copy, Crown, Download, Globe, HelpCircle, Mail, Trash2 } from "@tamagui/lucide-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -56,9 +57,10 @@ export default function Settings() {
     return displayName.substring(0, 2).toUpperCase();
   };
 
-  const handleCopyEmail = () => {
-    // TODO: Implement copy to clipboard functionality
-    console.log("Copy transaction email");
+  const handleCopyEmail = async () => {
+    if (emailInbox?.email_address) {
+      await Clipboard.setStringAsync(emailInbox.email_address);
+    }
   };
 
   return (
@@ -125,11 +127,12 @@ export default function Settings() {
             </Text>
             <Button
               unstyled
-              padding={4}
+              padding={12}
+              margin={-8}
               onPress={handleCopyEmail}
               pressStyle={{ opacity: 0.7 }}
             >
-              <Copy size={18} color="#111827" />
+              <Copy size={20} color="#111827" />
             </Button>
           </XStack>
         </YStack>

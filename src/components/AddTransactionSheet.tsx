@@ -1,8 +1,8 @@
 import { Calendar, ChevronLeft, ChevronRight, FileText, Tag, X } from "@tamagui/lucide-icons";
-import { useEffect, useState } from "react";
-import { Image, ScrollView, TouchableOpacity } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Image, ScrollView, TextInput, TouchableOpacity } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { Button, Input, Sheet, Text, XStack, YStack } from "tamagui";
+import { Button, Input, Sheet, Text, TextArea, XStack, YStack } from "tamagui";
 import { searchMerchants } from "../services/merchantService";
 import { createTransaction, formatDateForAPI, updateTransaction } from "../services/transactionService";
 import type { Subcategory } from "../types/category";
@@ -32,7 +32,6 @@ export default function AddTransactionSheet({ open, onOpenChange, transaction, o
   const [showVendorDropdown, setShowVendorDropdown] = useState(false);
   const [isVendorSelected, setIsVendorSelected] = useState(false);
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
-  const [isLoadingMerchants, setIsLoadingMerchants] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [selectedSubcategory, setSelectedSubcategory] = useState<Subcategory | null>(null);
   const [selectedCategoryName, setSelectedCategoryName] = useState("");
@@ -43,6 +42,8 @@ export default function AddTransactionSheet({ open, onOpenChange, transaction, o
     category?: string;
   }>({});
   const [isSaving, setIsSaving] = useState(false);
+  const vendorInputRef = useRef<TextInput>(null);
+  const noteInputRef = useRef<TextInput>(null);
 
   // Initialize form values when in edit mode
   useEffect(() => {
@@ -50,9 +51,13 @@ export default function AddTransactionSheet({ open, onOpenChange, transaction, o
       setTransactionType(transaction.type);
       setAmount(transaction.amount);
       setVendor(transaction.merchant || "");
+      // Update the uncontrolled input's displayed value for edit mode
+      vendorInputRef.current?.setNativeProps({ text: transaction.merchant || "" });
       setCategory(transaction.subcategory);
       setSelectedCategoryName(transaction.category);
       setNote(transaction.notes || "");
+      // Update the uncontrolled note input's displayed value for edit mode
+      noteInputRef.current?.setNativeProps({ text: transaction.notes || "" });
 
       // Parse date from ISO 8601 format (e.g., "2025-11-14T00:00:00+04:00" or "2025-11-13T20:00:00Z")
       // Extract just the date portion and create a local date to avoid timezone issues
@@ -99,28 +104,21 @@ export default function AddTransactionSheet({ open, onOpenChange, transaction, o
   useEffect(() => {
     if (vendor.trim().length > 0 && !isVendorSelected) {
       const fetchMerchants = async () => {
-        setIsLoadingMerchants(true);
         try {
           const merchants = await searchMerchants(vendor.trim());
           setMerchantSuggestions(merchants);
-          if (merchants.length > 0) {
-            setShowVendorDropdown(true);
-          } else {
-            setShowVendorDropdown(false);
-          }
+          setShowVendorDropdown(merchants.length > 0);
         } catch (error) {
           console.error("Failed to fetch merchants:", error);
           setMerchantSuggestions([]);
           setShowVendorDropdown(false);
-        } finally {
-          setIsLoadingMerchants(false);
         }
       };
 
       // Debounce API calls to avoid too many requests
       const timeoutId = setTimeout(fetchMerchants, 300);
       return () => clearTimeout(timeoutId);
-    } else {
+    } else if (vendor.trim().length === 0) {
       setMerchantSuggestions([]);
       setShowVendorDropdown(false);
     }
@@ -130,6 +128,8 @@ export default function AddTransactionSheet({ open, onOpenChange, transaction, o
     setIsVendorSelected(true);
     setShowVendorDropdown(false);
     setVendor(merchant.merchant_name);
+    // Update the uncontrolled input's displayed value
+    vendorInputRef.current?.setNativeProps({ text: merchant.merchant_name });
     setSelectedMerchant(merchant);
     // Convert merchant subcategory to full subcategory format
     setSelectedSubcategory({
@@ -143,18 +143,23 @@ export default function AddTransactionSheet({ open, onOpenChange, transaction, o
   };
 
   const handleVendorChange = (text: string) => {
-    setIsVendorSelected(false);
     setVendor(text);
-    setSelectedMerchant(null);
-    setSelectedSubcategory(null);
-    setSelectedCategoryName("");
-    // Clear auto-filled category when user manually edits vendor
-    setCategory("");
+    // Only reset category fields if a merchant was previously selected
+    if (isVendorSelected || selectedMerchant) {
+      setIsVendorSelected(false);
+      setSelectedMerchant(null);
+      setSelectedSubcategory(null);
+      setSelectedCategoryName("");
+      setCategory("");
+    }
   };
 
   const resetForm = () => {
     setAmount("");
     setVendor("");
+    // Clear the uncontrolled inputs' displayed values
+    vendorInputRef.current?.setNativeProps({ text: "" });
+    noteInputRef.current?.setNativeProps({ text: "" });
     setCategory("");
     setDate(new Date());
     setNote("");
@@ -365,19 +370,15 @@ export default function AddTransactionSheet({ open, onOpenChange, transaction, o
         borderTopRightRadius={20}
         padding={0}
       >
-        <KeyboardAwareScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: 100 }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
-          extraScrollHeight={100}
-          enableResetScrollToCoords={false}
+        {/* Sticky Header */}
+        <XStack
+          justifyContent="space-between"
+          alignItems="center"
+          paddingHorizontal={20}
+          paddingTop={20}
+          paddingBottom={16}
+          backgroundColor="$primaryBg"
         >
-            <YStack padding={20}>
-              {/* Header */}
-              <XStack justifyContent="space-between" alignItems="center" marginBottom={24}>
           <Button
             size="$3"
             chromeless
@@ -401,6 +402,17 @@ export default function AddTransactionSheet({ open, onOpenChange, transaction, o
           </Button>
         </XStack>
 
+        <KeyboardAwareScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          enableOnAndroid={true}
+          enableAutomaticScroll={true}
+          extraScrollHeight={100}
+          enableResetScrollToCoords={false}
+        >
+            <YStack paddingHorizontal={20}>
         {/* Amount Section */}
         <YStack alignItems="center" marginBottom={32}>
           <Text fontSize={14} color="$textSecondary" marginBottom={8}>
@@ -499,9 +511,10 @@ export default function AddTransactionSheet({ open, onOpenChange, transaction, o
               >
                 <Tag size={24} color="$primaryDeepGreen" />
                 <Input
+                  ref={vendorInputRef}
                   flex={1}
                   placeholder="Select or Add Merchant"
-                  value={vendor}
+                  defaultValue={vendor}
                   onChangeText={handleVendorChange}
                   borderWidth={0}
                   backgroundColor="transparent"
@@ -531,34 +544,26 @@ export default function AddTransactionSheet({ open, onOpenChange, transaction, o
                   overflow="hidden"
                 >
                   <ScrollView>
-                    {isLoadingMerchants ? (
-                      <YStack padding={16} alignItems="center">
-                        <Text fontSize={14} color="$textSecondary">
-                          Loading...
-                        </Text>
-                      </YStack>
-                    ) : (
-                      merchantSuggestions.map((merchant, index) => (
-                        <TouchableOpacity
-                          key={merchant.id}
-                          onPress={() => handleVendorSelect(merchant)}
+                    {merchantSuggestions.map((merchant, index) => (
+                      <TouchableOpacity
+                        key={merchant.id}
+                        onPress={() => handleVendorSelect(merchant)}
+                      >
+                        <YStack
+                          padding={12}
+                          paddingHorizontal={16}
+                          borderBottomWidth={index < merchantSuggestions.length - 1 ? 1 : 0}
+                          borderBottomColor="$borderColor"
                         >
-                          <YStack
-                            padding={12}
-                            paddingHorizontal={16}
-                            borderBottomWidth={index < merchantSuggestions.length - 1 ? 1 : 0}
-                            borderBottomColor="$borderColor"
-                          >
-                            <Text fontSize={16} color="$textPrimary" fontWeight="600">
-                              {merchant.merchant_name}
-                            </Text>
-                            <Text fontSize={12} color="$textSecondary" marginTop={2}>
-                              {merchant.category.name} • {merchant.subcategory.name}
-                            </Text>
-                          </YStack>
-                        </TouchableOpacity>
-                      ))
-                    )}
+                          <Text fontSize={16} color="$textPrimary" fontWeight="600">
+                            {merchant.merchant_name}
+                          </Text>
+                          <Text fontSize={12} color="$textSecondary" marginTop={2}>
+                            {merchant.category?.name} • {merchant.subcategory?.name}
+                          </Text>
+                        </YStack>
+                      </TouchableOpacity>
+                    ))}
                   </ScrollView>
                 </YStack>
               )}
@@ -676,20 +681,28 @@ export default function AddTransactionSheet({ open, onOpenChange, transaction, o
             backgroundColor="white"
             padding={16}
             borderRadius={12}
-            alignItems="center"
+            alignItems="flex-start"
             gap={12}
           >
             <FileText size={24} color="$primaryDeepGreen" />
-            <Input
+            <TextArea
+              ref={noteInputRef}
               flex={1}
               placeholder="Add a note"
-              value={note}
+              defaultValue={note}
               onChangeText={setNote}
               borderWidth={0}
               backgroundColor="transparent"
               fontSize={16}
               color="$textPrimary"
               placeholderTextColor="$textSecondary"
+              numberOfLines={4}
+              minHeight={88}
+              textAlignVertical="top"
+              scrollEnabled={true}
+              paddingTop={0}
+              paddingVertical={0}
+              marginTop={-2}
             />
           </XStack>
         </YStack>
